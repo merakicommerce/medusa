@@ -2,7 +2,6 @@ import { defaultStoreCartFields, defaultStoreCartRelations } from "."
 import { CartService } from "../../../../services"
 import { EntityManager } from "typeorm"
 import IdempotencyKeyService from "../../../../services/idempotency-key"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /carts/{id}/payment-sessions
@@ -134,11 +133,5 @@ export default async (req, res) => {
     throw err
   }
 
-  if (idempotencyKey.response_body.cart) {
-    idempotencyKey.response_body.data = cleanResponseData(
-      idempotencyKey.response_body.cart,
-      []
-    )
-  }
   res.status(idempotencyKey.response_code).json(idempotencyKey.response_body)
 }

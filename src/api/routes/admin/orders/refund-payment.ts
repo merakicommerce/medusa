@@ -9,7 +9,6 @@ import {
 import { OrderService } from "../../../../services"
 import { EntityManager } from "typeorm"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/refund
@@ -98,7 +97,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.status(200).json({ order: cleanResponseData(order, []) })
+  res.status(200).json({ order })
 }
 
 /**

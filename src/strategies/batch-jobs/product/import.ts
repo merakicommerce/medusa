@@ -12,11 +12,14 @@ import {
   ProductVariantService,
   RegionService,
   SalesChannelService,
-  ShippingProfileService,
+  ShippingProfileService
 } from "../../../services"
 import CsvParser from "../../../services/csv-parser"
 import { CreateProductInput } from "../../../types/product"
-import { CreateProductVariantInput } from "../../../types/product-variant"
+import {
+  CreateProductVariantInput,
+  UpdateProductVariantInput
+} from "../../../types/product-variant"
 import { FlagRouter } from "../../../utils/flag-router"
 import {
   OperationType,
@@ -24,11 +27,11 @@ import {
   ProductImportCsvSchema,
   ProductImportInjectedProps,
   ProductImportJobContext,
-  TParsedProductImportRowData,
+  TParsedProductImportRowData
 } from "./types"
 import {
   productImportColumnsDefinition,
-  productImportSalesChannelsColumnsDefinition,
+  productImportSalesChannelsColumnsDefinition
 } from "./types/columns-definition"
 import { transformProductData, transformVariantData } from "./utils"
 
@@ -581,13 +584,12 @@ class ProductImportStrategy extends AbstractBatchJobStrategy {
 
         await this.prepareVariantOptions(variantOp, product.id)
 
-        const updateData = transformVariantData(variantOp)
-        delete updateData.product
-        delete updateData["product.handle"]
-
         await this.productVariantService_
           .withTransaction(transactionManager)
-          .update(variantOp["variant.id"] as string, updateData)
+          .update(
+            variantOp["variant.id"] as string,
+            transformVariantData(variantOp) as UpdateProductVariantInput
+          )
       } catch (e) {
         ProductImportStrategy.throwDescriptiveError(variantOp, e.message)
       }

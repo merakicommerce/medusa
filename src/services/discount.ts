@@ -634,12 +634,12 @@ class DiscountService extends TransactionBaseService {
         })
 
       let fullItemPrice = lineItem.unit_price * lineItem.quantity
-      const includesTax =
+      if (
         this.featureFlagRouter_.isFeatureEnabled(
           TaxInclusivePricingFeatureFlag.key
-        ) && lineItem.includes_tax
-
-      if (includesTax) {
+        ) &&
+        lineItem.includes_tax
+      ) {
         const lineItemTotals = await this.newTotalsService_
           .withTransaction(transactionManager)
           .getLineItemTotals([lineItem], {
@@ -664,7 +664,6 @@ class DiscountService extends TransactionBaseService {
         const totals = await this.newTotalsService_.getLineItemTotals(
           discountedItems,
           {
-            includeTax: includesTax,
             calculationContext,
           }
         )
@@ -674,13 +673,14 @@ class DiscountService extends TransactionBaseService {
         }, 0)
         const nominator = Math.min(value, subtotal)
         const totalItemPercentage = fullItemPrice / subtotal
-
-        adjustment = nominator * totalItemPercentage
+        adjustment = Math.round(nominator * totalItemPercentage)
       } else {
         adjustment = value * lineItem.quantity
       }
 
-      return Math.min(adjustment, fullItemPrice)
+      // if the amount of the discount exceeds the total price of the item,
+      // we return the total item price, else the fixed amount
+      return adjustment >= fullItemPrice ? fullItemPrice : adjustment
     })
   }
 

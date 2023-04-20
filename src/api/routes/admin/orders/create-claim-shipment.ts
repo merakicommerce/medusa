@@ -2,7 +2,6 @@ import { ClaimService, OrderService } from "../../../../services"
 import { IsArray, IsNotEmpty, IsOptional, IsString } from "class-validator"
 import { EntityManager } from "typeorm"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/claims/{claim_id}/shipments
@@ -93,7 +92,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.json({ order: cleanResponseData(order, []) })
+  res.json({ order })
 }
 
 /**

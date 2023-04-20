@@ -9,7 +9,6 @@ import { MedusaError } from "medusa-core-utils"
 import { Fulfillment } from "../../../../models"
 import { IInventoryService } from "../../../../interfaces"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/fulfillments/{fulfillment_id}/cancel
@@ -109,7 +108,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.json({ order: cleanResponseData(order, []) })
+  res.json({ order })
 }
 
 export const adjustInventoryForCancelledFulfillment = async (

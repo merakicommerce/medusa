@@ -1,7 +1,6 @@
 import { OrderService } from "../../../../services"
 import { EntityManager } from "typeorm"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/archive
@@ -71,7 +70,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.json({ order: cleanResponseData(order, []) })
+  res.json({ order })
 }
 
 export class AdminPostOrdersOrderArchiveParams extends FindParams {}

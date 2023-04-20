@@ -31,8 +31,6 @@ type LineItemTotals = {
   original_tax_total: number
   tax_lines: LineItemTaxLine[]
   discount_total: number
-
-  raw_discount_total: number
 }
 
 type GiftCardTransaction = {
@@ -174,8 +172,7 @@ export default class NewTotalsService extends TransactionBaseService {
       subtotal = 0 // in that case we need to know the tax rate to compute it later
     }
 
-    const raw_discount_total = lineItemAllocation.discount?.amount ?? 0
-    const discount_total = Math.round(raw_discount_total)
+    const discount_total = lineItemAllocation.discount?.amount ?? 0
 
     const totals: LineItemTotals = {
       unit_price: item.unit_price,
@@ -187,8 +184,6 @@ export default class NewTotalsService extends TransactionBaseService {
       original_tax_total: 0,
       tax_total: 0,
       tax_lines: item.tax_lines ?? [],
-
-      raw_discount_total: raw_discount_total,
     }
 
     if (includeTax) {
@@ -279,8 +274,7 @@ export default class NewTotalsService extends TransactionBaseService {
       subtotal = 0 // in that case we need to know the tax rate to compute it later
     }
 
-    const raw_discount_total = lineItemAllocation.discount?.amount ?? 0
-    const discount_total = Math.round(raw_discount_total)
+    const discount_total = lineItemAllocation.discount?.amount ?? 0
 
     const totals: LineItemTotals = {
       unit_price: item.unit_price,
@@ -292,8 +286,6 @@ export default class NewTotalsService extends TransactionBaseService {
       original_tax_total: 0,
       tax_total: 0,
       tax_lines: [],
-
-      raw_discount_total,
     }
 
     taxRate = taxRate / 100

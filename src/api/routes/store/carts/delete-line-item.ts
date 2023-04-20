@@ -1,7 +1,6 @@
 import { EntityManager } from "typeorm"
 import { defaultStoreCartFields, defaultStoreCartRelations } from "."
 import { CartService } from "../../../../services"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [delete] /carts/{id}/line-items/{line_id}
@@ -73,6 +72,5 @@ export default async (req, res) => {
     select: defaultStoreCartFields,
     relations: defaultStoreCartRelations,
   })
-
-  res.status(200).json({ cart: cleanResponseData(data, []) })
+  res.status(200).json({ cart: data })
 }

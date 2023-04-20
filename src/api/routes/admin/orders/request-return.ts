@@ -18,7 +18,6 @@ import { EntityManager } from "typeorm"
 import { Order, Return } from "../../../../models"
 import { OrdersReturnItem } from "../../../../types/orders"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/return
@@ -238,9 +237,7 @@ export default async (req, res) => {
 
                   return {
                     response_code: 200,
-                    response_body: {
-                      order: cleanResponseData(order, []),
-                    },
+                    response_body: { order },
                   }
                 })
             })

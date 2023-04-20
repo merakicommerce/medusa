@@ -3,7 +3,7 @@ import { MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
 import { defaultStoreCartFields, defaultStoreCartRelations } from "."
 import { CartService } from "../../../../services"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
+import { validator } from "../../../../utils/validator"
 
 /**
  * @oas [post] /carts/{id}/line-items/{line_id}
@@ -63,7 +63,10 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
 export default async (req, res) => {
   const { id, line_id } = req.params
 
-  const validated = req.validatedBody
+  const validated = await validator(
+    StorePostCartsCartLineItemsItemReq,
+    req.body
+  )
 
   const manager: EntityManager = req.scope.resolve("manager")
   const cartService: CartService = req.scope.resolve("cartService")
@@ -112,7 +115,7 @@ export default async (req, res) => {
     relations: defaultStoreCartRelations,
   })
 
-  res.status(200).json({ cart: cleanResponseData(data, []) })
+  res.status(200).json({ cart: data })
 }
 
 /**

@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { ProductType } from "../../../.."
 import { PaginatedResponse } from "../../../../types/common"
-import middlewares, { transformStoreQuery } from "../../../middlewares"
+import middlewares, { transformQuery } from "../../../middlewares"
 import "reflect-metadata"
 import { StoreGetProductTypesParams } from "./list-product-types"
 
@@ -12,7 +12,7 @@ export default (app) => {
 
   route.get(
     "/",
-    transformStoreQuery(StoreGetProductTypesParams, {
+    transformQuery(StoreGetProductTypesParams, {
       defaultFields: defaultStoreProductTypeFields,
       defaultRelations: defaultStoreProductTypeRelations,
       allowedFields: allowedStoreProductTypeFields,

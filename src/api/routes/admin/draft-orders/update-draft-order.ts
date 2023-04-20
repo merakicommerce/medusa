@@ -19,7 +19,6 @@ import { CartUpdateProps } from "../../../../types/cart"
 import { AddressPayload } from "../../../../types/common"
 import { validator } from "../../../../utils/validator"
 import { IsType } from "../../../../utils/validators/is-type"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /admin/draft-orders/{id}
@@ -138,7 +137,7 @@ export default async (req, res) => {
     select: defaultAdminDraftOrdersCartFields,
   })
 
-  res.status(200).json({ draft_order: cleanResponseData(draftOrder, []) })
+  res.status(200).json({ draft_order: draftOrder })
 }
 
 /**

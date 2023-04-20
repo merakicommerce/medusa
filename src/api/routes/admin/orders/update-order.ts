@@ -13,7 +13,6 @@ import { AddressPayload, FindParams } from "../../../../types/common"
 import { EntityManager } from "typeorm"
 import { OrderService } from "../../../../services"
 import { Type } from "class-transformer"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}
@@ -97,7 +96,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.status(200).json({ order: cleanResponseData(order, []) })
+  res.status(200).json({ order })
 }
 
 /**

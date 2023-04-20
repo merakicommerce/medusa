@@ -8,14 +8,8 @@ import { ClassConstructor, MedusaContainer } from "../types/global"
 /**
  * Registers all models in the model directory
  */
-export default ({
-  container,
-  isTest,
-}: {
-  container: MedusaContainer
-  isTest?: boolean
-}): void => {
-  const corePath = isTest ? "../repositories/*.ts" : "../repositories/*.js"
+export default ({ container }: { container: MedusaContainer }): void => {
+  const corePath = "../repositories/*.js"
   const coreFull = path.join(__dirname, corePath)
 
   const core = glob.sync(coreFull, { cwd: __dirname })

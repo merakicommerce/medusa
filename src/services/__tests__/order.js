@@ -1,8 +1,8 @@
 import { IdMap, MockManager, MockRepository } from "medusa-test-utils"
 import OrderService from "../order"
+import { ProductVariantInventoryServiceMock } from "../__mocks__/product-variant-inventory"
 import { LineItemServiceMock } from "../__mocks__/line-item"
 import { newTotalsServiceMock } from "../__mocks__/new-totals"
-import { ProductVariantInventoryServiceMock } from "../__mocks__/product-variant-inventory"
 import { taxProviderServiceMock } from "../__mocks__/tax-provider"
 
 describe("OrderService", () => {
@@ -1072,15 +1072,10 @@ describe("OrderService", () => {
           { no_notification: input }
         )
 
-        expect(eventBusService.emit).toHaveBeenCalledWith([
-          {
-            eventName: expect.any(String),
-            data: {
-              id: expect.any(String),
-              no_notification: expected,
-            },
-          },
-        ])
+        expect(eventBusService.emit).toHaveBeenCalledWith(expect.any(String), {
+          id: expect.any(String),
+          no_notification: expected,
+        })
       }
     )
   })
@@ -1251,10 +1246,17 @@ describe("OrderService", () => {
       save: jest.fn().mockImplementation((f) => f),
     })
 
+    const eventBus = {
+      emit: () =>
+        Promise.resolve({
+          finished: () => Promise.resolve({}),
+        }),
+    }
+
     const orderService = new OrderService({
       manager: MockManager,
       orderRepository: orderRepo,
-      eventBusService: eventBusService,
+      eventBusService: eventBus,
     })
 
     beforeEach(async () => {
@@ -1345,7 +1347,6 @@ describe("OrderService", () => {
             id: IdMap.getId("order"),
             items: [],
             paid_total: 0,
-            raw_discount_total: 0,
             refundable_amount: 0,
             refunded_total: 0,
             shipping_methods: [
@@ -1385,7 +1386,6 @@ describe("OrderService", () => {
             id: IdMap.getId("order"),
             items: [],
             paid_total: 0,
-            raw_discount_total: 0,
             refundable_amount: 0,
             refunded_total: 0,
             shipping_methods: [

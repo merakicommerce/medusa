@@ -1,59 +1,5 @@
 # Change Log
 
-## 1.7.15
-
-### Patch Changes
-
-- [#3539](https://github.com/medusajs/medusa/pull/3539) [`98fe8fd00`](https://github.com/medusajs/medusa/commit/98fe8fd00a1912fde1d2a93b434bda500a213c14) Thanks [@adrien2p](https://github.com/adrien2p)! - Fix(medusa): Variant update should include the id for the listeners to be able to identify the entity
-
-- [#3491](https://github.com/medusajs/medusa/pull/3491) [`2869763ea`](https://github.com/medusajs/medusa/commit/2869763ea9673cf5c5a3aa10b58f61b8e830ce21) Thanks [@carlos-r-l-rodrigues](https://github.com/carlos-r-l-rodrigues)! - Fix eventBus.emit using redis mock
-
-## 1.7.14
-
-### Patch Changes
-
-- [`902ed3c0b`](https://github.com/medusajs/medusa/commit/902ed3c0b21cd525d9975e59b7a8120ae5f7a895) Thanks [@olivermrbl](https://github.com/olivermrbl)! - fix(medusa): Issue with fixed total discount with tax-inclusive pricing enabled
-
-- [#3417](https://github.com/medusajs/medusa/pull/3417) [`fa4049cb5`](https://github.com/medusajs/medusa/commit/fa4049cb51232b2ed7091b1322c3fc14cd23e451) Thanks [@adrien2p](https://github.com/adrien2p)! - chores(medusa): Refactoring product update flow to improve handling and performances
-
-- Updated dependencies [[`fa4049cb5`](https://github.com/medusajs/medusa/commit/fa4049cb51232b2ed7091b1322c3fc14cd23e451)]:
-  - medusa-test-utils@1.1.40
-
-## 1.7.13
-
-### Patch Changes
-
-- [#3431](https://github.com/medusajs/medusa/pull/3431) [`601d20e7a`](https://github.com/medusajs/medusa/commit/601d20e7ab293728cd81f0723805841016812120) Thanks [@adrien2p](https://github.com/adrien2p)! - chores(medusa): Improve draft order creation perf flow
-
-- [#3407](https://github.com/medusajs/medusa/pull/3407) [`f0a1355fe`](https://github.com/medusajs/medusa/commit/f0a1355feb5160ff7de1f3d3da769efe29d0d8ed) Thanks [@adrien2p](https://github.com/adrien2p)! - feat(medusa): Bulk emit events
-
-- Updated dependencies [[`f0a1355fe`](https://github.com/medusajs/medusa/commit/f0a1355feb5160ff7de1f3d3da769efe29d0d8ed)]:
-  - medusa-test-utils@1.1.39
-
-## 1.7.12
-
-### Patch Changes
-
-- [#3394](https://github.com/medusajs/medusa/pull/3394) [`ce577f269`](https://github.com/medusajs/medusa/commit/ce577f2696aa2181bef8f3096b1a639feabe2714) Thanks [@olivermrbl](https://github.com/olivermrbl)! - feat(medusa): Add global job options for events
-
-- [#3388](https://github.com/medusajs/medusa/pull/3388) [`aa0d1f321`](https://github.com/medusajs/medusa/commit/aa0d1f32153f82c6219efe5cfc08862db5e5a129) Thanks [@olivermrbl](https://github.com/olivermrbl)! - fix(medusa): Remove default job age option from EventBus
-
-- [#3384](https://github.com/medusajs/medusa/pull/3384) [`9f508c8bd`](https://github.com/medusajs/medusa/commit/9f508c8bd8bee63677504cc8b86f1643579945d8) Thanks [@pKorsholm](https://github.com/pKorsholm)! - Fix(medusa): Column naming on migrations
-
-## 1.7.11
-
-### Patch Changes
-
-- [#3357](https://github.com/medusajs/medusa/pull/3357) [`c43248131`](https://github.com/medusajs/medusa/commit/c432481319cc205938081c3fcf60e75053b659ca) Thanks [@riqwan](https://github.com/riqwan)! - fix(medusa): fix error on creating product without FF sales channel
-
-## 1.7.10
-
-### Patch Changes
-
-- [#3346](https://github.com/medusajs/medusa/pull/3346) [`b458615ed`](https://github.com/medusajs/medusa/commit/b458615ed50a7c637e9e77f29f21c7ab300ed5d8) Thanks [@adrien2p](https://github.com/adrien2p)! - Fix(medusa): All payment sessions should be removed if cart total reach 0
-
-- [#3351](https://github.com/medusajs/medusa/pull/3351) [`4b114cc41`](https://github.com/medusajs/medusa/commit/4b114cc4191ba20832b66072ec82386b22a3533c) Thanks [@olivermrbl](https://github.com/olivermrbl)! - feat(medusa): Use Bull `jobId` option to identify duplicates
-
 ## 1.7.9
 
 ### Patch Changes

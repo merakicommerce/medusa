@@ -8,9 +8,10 @@ import {
   PrimaryColumn,
 } from "typeorm"
 
-import { DbAwareColumn, generateEntityId } from "../utils"
+import { DbAwareColumn } from "../utils/db-aware-column"
 import { Discount } from "./discount"
 import { LineItem } from "./line-item"
+import { generateEntityId } from "../utils/generate-entity-id"
 
 @Entity()
 @Index(["discount_id", "item_id"], {
@@ -40,7 +41,7 @@ export class LineItemAdjustment {
   @Column({ nullable: true })
   discount_id: string
 
-  @Column({ type: "numeric", transformer: { to: (value) => value, from: (value) => parseFloat(value) } })
+  @Column({ type: "int" })
   amount: number
 
   @DbAwareColumn({ type: "jsonb", nullable: true })
@@ -92,7 +93,7 @@ export class LineItemAdjustment {
  *     $ref: "#/components/schemas/Discount"
  *   amount:
  *     description: The adjustment amount
- *     type: number
+ *     type: integer
  *     example: 1000
  *   metadata:
  *     description: An optional key-value map with additional details

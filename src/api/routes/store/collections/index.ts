@@ -1,7 +1,7 @@
 import { Router } from "express"
 import { PaginatedResponse } from "../../../../types/common"
 import { ProductCollection } from "../../../../"
-import middlewares, { transformStoreQuery } from "../../../middlewares"
+import middlewares, { transformQuery } from "../../../middlewares"
 import { StoreGetCollectionsParams } from "./list-collections"
 
 const route = Router()
@@ -11,7 +11,7 @@ export default (app) => {
 
   route.get(
     "/",
-    transformStoreQuery(StoreGetCollectionsParams, {
+    transformQuery(StoreGetCollectionsParams, {
       allowedFields,
       isList: true,
     }),

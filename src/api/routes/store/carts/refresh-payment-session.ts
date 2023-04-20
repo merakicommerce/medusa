@@ -1,6 +1,5 @@
 import { CartService } from "../../../../services"
 import { EntityManager } from "typeorm"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /carts/{id}/payment-sessions/{provider_id}/refresh
@@ -68,5 +67,5 @@ export default async (req, res) => {
     ],
   })
 
-  res.status(200).json({ cart: cleanResponseData(data, []) })
+  res.status(200).json({ cart: data })
 }

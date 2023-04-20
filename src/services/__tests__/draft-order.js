@@ -35,12 +35,10 @@ describe("DraftOrderService", () => {
 
     const lineItemService = {
       generate: jest.fn().mockImplementation(() =>
-        Promise.resolve([
-          {
-            title: "test-item",
-            variant_id: "test-variant",
-          },
-        ])
+        Promise.resolve({
+          title: "test-item",
+          variant_id: "test-variant",
+        })
       ),
       create: jest.fn().mockImplementation((data) => data),
       withTransaction: function () {
@@ -85,12 +83,6 @@ describe("DraftOrderService", () => {
         })
       ),
       retrieve: jest.fn().mockReturnValue(
-        Promise.resolve({
-          id: "test-cart",
-          ...testOrder,
-        })
-      ),
-      retrieveWithTotals: jest.fn().mockReturnValue(
         Promise.resolve({
           id: "test-cart",
           ...testOrder,
@@ -159,37 +151,28 @@ describe("DraftOrderService", () => {
 
       expect(cartService.addShippingMethod).toHaveBeenCalledTimes(1)
       expect(cartService.addShippingMethod).toHaveBeenCalledWith(
-        {
-          id: "test-cart",
-          ...testOrder,
-        },
+        "test-cart",
         "test-option",
         {}
       )
 
       expect(lineItemService.generate).toHaveBeenCalledTimes(1)
       expect(lineItemService.generate).toHaveBeenCalledWith(
-        [
-          {
-            variantId: "test-variant",
-            quantity: 2,
-            metadata: {},
-            unit_price: undefined,
-          },
-        ],
+        "test-variant",
+        "test-region",
+        2,
         {
-          region_id: "test-region",
+          metadata: {},
+          unit_price: undefined,
         }
       )
 
       expect(lineItemService.create).toHaveBeenCalledTimes(1)
-      expect(lineItemService.create).toHaveBeenCalledWith([
-        {
-          cart_id: cartId,
-          title,
-          variant_id: "test-variant",
-        },
-      ])
+      expect(lineItemService.create).toHaveBeenCalledWith({
+        cart_id: cartId,
+        title,
+        variant_id: "test-variant",
+      })
 
       expect(cartService.applyDiscount).toHaveBeenCalledTimes(0)
     })
@@ -197,8 +180,6 @@ describe("DraftOrderService", () => {
     it("creates a draft order with a discount", async () => {
       const cartId = "test-cart"
       const title = "test-item"
-
-      const originalTestOrder = { ...testOrder }
 
       testOrder["discounts"] = [{ code: "TEST" }]
       await draftOrderService.create(testOrder)
@@ -219,37 +200,28 @@ describe("DraftOrderService", () => {
 
       expect(cartService.addShippingMethod).toHaveBeenCalledTimes(1)
       expect(cartService.addShippingMethod).toHaveBeenCalledWith(
-        {
-          id: "test-cart",
-          ...originalTestOrder,
-        },
+        "test-cart",
         "test-option",
         {}
       )
 
       expect(lineItemService.generate).toHaveBeenCalledTimes(1)
       expect(lineItemService.generate).toHaveBeenCalledWith(
-        [
-          {
-            variantId: "test-variant",
-            quantity: 2,
-            metadata: {},
-            unit_price: undefined,
-          },
-        ],
+        "test-variant",
+        "test-region",
+        2,
         {
-          region_id: "test-region",
+          metadata: {},
+          unit_price: undefined,
         }
       )
 
       expect(lineItemService.create).toHaveBeenCalledTimes(1)
-      expect(lineItemService.create).toHaveBeenCalledWith([
-        {
-          cart_id: cartId,
-          title,
-          variant_id: "test-variant",
-        },
-      ])
+      expect(lineItemService.create).toHaveBeenCalledWith({
+        cart_id: cartId,
+        title,
+        variant_id: "test-variant",
+      })
 
       expect(cartService.update).toHaveBeenCalledTimes(1)
       expect(cartService.update).toHaveBeenCalledWith(cartId, {

@@ -3,8 +3,6 @@ import { CalculationContextData } from "./totals"
 export type GenerateInputData = {
   variantId: string
   quantity: number
-  metadata?: Record<string, unknown>
-  unit_price?: number
 }
 
 export type GenerateLineItemContext = {

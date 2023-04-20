@@ -2,7 +2,6 @@ import { OrderService, SwapService } from "../../../../services"
 
 import { EntityManager } from "typeorm"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/swaps/{swap_id}/process-payment
@@ -74,7 +73,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.json({ order: cleanResponseData(order, []) })
+  res.json({ order })
 }
 
 // eslint-disable-next-line max-len

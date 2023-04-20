@@ -1,6 +1,5 @@
 import { CartService } from "../../../../services"
 import { EntityManager } from "typeorm"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [get] /carts/{id}
@@ -71,5 +70,5 @@ export default async (req, res) => {
   }
 
   const data = await cartService.retrieveWithTotals(id, req.retrieveConfig)
-  res.json({ cart: cleanResponseData(data, []) })
+  res.json({ cart: data })
 }

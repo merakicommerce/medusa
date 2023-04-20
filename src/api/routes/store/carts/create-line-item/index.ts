@@ -11,7 +11,6 @@ import {
   runIdempotencyStep,
   RunIdempotencyStepOptions,
 } from "../../../../../utils/idempotency"
-import { cleanResponseData } from "../../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /carts/{id}/line-items
@@ -129,13 +128,6 @@ export default async (req, res) => {
 
   if (err) {
     throw err
-  }
-
-  if (idempotencyKey.response_body.cart) {
-    idempotencyKey.response_body.cart = cleanResponseData(
-      idempotencyKey.response_body.cart,
-      []
-    )
   }
 
   res.status(idempotencyKey.response_code).json(idempotencyKey.response_body)

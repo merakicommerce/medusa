@@ -7,7 +7,6 @@ import {
 } from "."
 
 import { DraftOrder } from "../../../.."
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [get] /draft-orders/{id}
@@ -78,7 +77,5 @@ export default async (req, res) => {
     select: defaultAdminDraftOrdersCartFields,
   })
 
-  res.json({
-    draft_order: cleanResponseData(draftOrder, []),
-  })
+  res.json({ draft_order: draftOrder })
 }

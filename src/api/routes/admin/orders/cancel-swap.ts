@@ -3,7 +3,6 @@ import { OrderService, SwapService } from "../../../../services"
 import { EntityManager } from "typeorm"
 import { MedusaError } from "medusa-core-utils"
 import { FindParams } from "../../../../types/common"
-import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
  * @oas [post] /orders/{id}/swaps/{swap_id}/cancel
@@ -84,7 +83,7 @@ export default async (req, res) => {
     includes: req.includes,
   })
 
-  res.json({ order: cleanResponseData(order, []) })
+  res.json({ order })
 }
 
 export class AdminPostOrdersSwapCancelParams extends FindParams {}

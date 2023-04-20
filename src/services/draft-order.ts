@@ -1,13 +1,7 @@
 import { isDefined, MedusaError } from "medusa-core-utils"
 import { Brackets, EntityManager, FindManyOptions, UpdateResult } from "typeorm"
 import { TransactionBaseService } from "../interfaces"
-import {
-  CartType,
-  DraftOrder,
-  DraftOrderStatus,
-  LineItem,
-  ShippingMethod,
-} from "../models"
+import { CartType, DraftOrder, DraftOrderStatus } from "../models"
 import { DraftOrderRepository } from "../repositories/draft-order"
 import { OrderRepository } from "../repositories/order"
 import { PaymentRepository } from "../repositories/payment"
@@ -20,7 +14,6 @@ import EventBusService from "./event-bus"
 import LineItemService from "./line-item"
 import ProductVariantService from "./product-variant"
 import ShippingOptionService from "./shipping-option"
-import { GenerateInputData } from "../types/line-item"
 
 type InjectedDependencies = {
   manager: EntityManager
@@ -278,7 +271,7 @@ class DraftOrderService extends TransactionBaseService {
         const cartServiceTx =
           this.cartService_.withTransaction(transactionManager)
 
-        let createdCart = await cartServiceTx.create({
+        const createdCart = await cartServiceTx.create({
           type: CartType.DRAFT_ORDER,
           ...rawCart,
         })
@@ -300,106 +293,62 @@ class DraftOrderService extends TransactionBaseService {
         const lineItemServiceTx =
           this.lineItemService_.withTransaction(transactionManager)
 
-        const itemsToGenerate: GenerateInputData[] = []
-        const itemsToCreate: Partial<LineItem>[] = []
-
-        // prepare that for next steps
-        ;(items ?? []).forEach((item) => {
+        for (const item of items || []) {
           if (item.variant_id) {
-            itemsToGenerate.push({
-              variantId: item.variant_id,
-              quantity: item.quantity,
-              metadata: item.metadata,
-              unit_price: item.unit_price,
-            })
-            return
-          }
-
-          let price
-          if (!isDefined(item.unit_price) || item.unit_price < 0) {
-            price = 0
-          } else {
-            price = item.unit_price
-          }
-
-          itemsToCreate.push({
-            cart_id: createdCart.id,
-            has_shipping: true,
-            title: item.title || "Custom item",
-            allow_discounts: false,
-            unit_price: price,
-            quantity: item.quantity,
-          })
-        })
-
-        const promises: Promise<any>[] = []
-
-        // generate line item link to a variant
-        if (itemsToGenerate.length) {
-          const generatedLines = await lineItemServiceTx.generate(
-            itemsToGenerate,
-            {
-              region_id: data.region_id,
-            }
-          )
-
-          const toCreate = generatedLines.map((line) => ({
-            ...line,
-            cart_id: createdCart.id,
-          }))
-
-          promises.push(lineItemServiceTx.create(toCreate))
-        }
-
-        // custom line items can be added to a draft order
-        if (itemsToCreate.length) {
-          promises.push(lineItemServiceTx.create(itemsToCreate))
-        }
-
-        const shippingMethodToCreate: Partial<ShippingMethod>[] = []
-
-        shipping_methods.forEach((method) => {
-          if (isDefined(method.price)) {
-            shippingMethodToCreate.push({
-              shipping_option_id: method.option_id,
-              cart_id: createdCart.id,
-              price: method.price,
-            })
-            return
-          }
-        })
-
-        if (shippingMethodToCreate.length) {
-          await this.customShippingOptionService_
-            .withTransaction(transactionManager)
-            .create(shippingMethodToCreate)
-        }
-
-        createdCart = await cartServiceTx.retrieveWithTotals(createdCart.id, {
-          relations: [
-            "shipping_methods",
-            "shipping_methods.shipping_option",
-            "items",
-            "items.variant",
-            "items.variant.product",
-            "payment_sessions",
-          ],
-        })
-
-        shipping_methods.forEach((method) => {
-          promises.push(
-            cartServiceTx.addShippingMethod(
-              createdCart,
-              method.option_id,
-              method.data
+            const line = await lineItemServiceTx.generate(
+              item.variant_id,
+              data.region_id,
+              item.quantity,
+              {
+                metadata: item?.metadata || {},
+                unit_price: item.unit_price,
+              }
             )
-          )
-        })
 
-        await Promise.all(promises)
+            await lineItemServiceTx.create({
+              ...line,
+              cart_id: createdCart.id,
+            })
+          } else {
+            let price
+            if (typeof item.unit_price === `undefined` || item.unit_price < 0) {
+              price = 0
+            } else {
+              price = item.unit_price
+            }
+
+            // custom line items can be added to a draft order
+            await lineItemServiceTx.create({
+              cart_id: createdCart.id,
+              has_shipping: true,
+              title: item.title || "Custom item",
+              allow_discounts: false,
+              unit_price: price,
+              quantity: item.quantity,
+            })
+          }
+        }
 
         if (discounts?.length) {
           await cartServiceTx.update(createdCart.id, { discounts })
+        }
+
+        for (const method of shipping_methods) {
+          if (typeof method.price !== "undefined") {
+            await this.customShippingOptionService_
+              .withTransaction(transactionManager)
+              .create({
+                shipping_option_id: method.option_id,
+                cart_id: createdCart.id,
+                price: method.price,
+              })
+          }
+
+          await cartServiceTx.addShippingMethod(
+            createdCart.id,
+            method.option_id,
+            method.data
+          )
         }
 
         return result

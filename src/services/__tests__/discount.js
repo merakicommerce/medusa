@@ -737,9 +737,8 @@ describe("DiscountService", () => {
         }
       )
 
-      // The sum of both is equal to the expected 400
-      expect(adjustment1).toBeCloseTo(291, 0)
-      expect(adjustment2).toBeCloseTo(109, 0)
+      expect(adjustment1).toBe(291)
+      expect(adjustment2).toBe(109)
     })
 
     it("returns line item amount if discount exceeds lime item price", async () => {
