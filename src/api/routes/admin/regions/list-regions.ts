@@ -9,7 +9,7 @@ import { Type } from "class-transformer"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [get] /admin/regions
+ * @oas [get] /regions
  * operationId: "GetRegions"
  * summary: "List Regions"
  * description: "Retrieves a list of Regions."
@@ -70,7 +70,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Regions
+ *   - Region
  * responses:
  *   200:
  *     description: OK

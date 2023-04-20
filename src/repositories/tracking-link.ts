@@ -1,5 +1,5 @@
-import { TrackingLink } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { TrackingLink } from "../models/tracking-link"
 
-export const TrackingLinkRepository = dataSource.getRepository(TrackingLink)
-export default TrackingLinkRepository
+@EntityRepository(TrackingLink)
+export class TrackingLinkRepository extends Repository<TrackingLink> {}

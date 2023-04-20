@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { BatchJob } from "../../../.."
-import { PaginatedResponse } from "../../../../types/common"
+import { DeleteResponse, PaginatedResponse } from "../../../../types/common"
 import middlewares, {
   canAccessBatchJob,
   getRequestedBatchJob,
@@ -45,8 +45,6 @@ export default (app) => {
 /**
  * @schema AdminBatchJobRes
  * type: object
- * required:
- *   - batch_job
  * properties:
  *   batch_job:
  *     $ref: "#/components/schemas/BatchJob"
@@ -58,11 +56,6 @@ export type AdminBatchJobRes = {
 /**
  * @schema AdminBatchJobListRes
  * type: object
- * required:
- *   - batch_jobs
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   batch_jobs:
  *      type: array

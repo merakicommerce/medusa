@@ -20,7 +20,7 @@ import { pickBy } from "lodash"
 import { isDefined } from "medusa-core-utils"
 
 /**
- * @oas [get] /admin/price-lists/{id}/products
+ * @oas [get] /price-lists/{id}/products
  * operationId: "GetPriceListsPriceListProducts"
  * summary: "List Products"
  * description: "Retrieves a list of Product that are part of a Price List"
@@ -156,7 +156,7 @@ import { isDefined } from "medusa-core-utils"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Price Lists
+ *   - Price List
  * responses:
  *   200:
  *     description: OK

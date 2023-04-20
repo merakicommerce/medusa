@@ -10,7 +10,7 @@ import { Type } from "class-transformer"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [get] /admin/tax-rates
+ * @oas [get] /tax-rates
  * operationId: "GetTaxRates"
  * summary: "List Tax Rates"
  * description: "Retrieves a list of TaxRates"
@@ -94,7 +94,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Tax Rates
+ *   - Tax Rate
  * responses:
  *   200:
  *     description: OK

@@ -21,7 +21,6 @@ export type FulfillmentItemPartition = {
 export type CreateShipmentConfig = {
   metadata?: Record<string, unknown>
   no_notification?: boolean
-  location_id?: string
 }
 
 export type CreateFulfillmentOrder = Omit<ClaimOrder, "beforeInsert"> & {

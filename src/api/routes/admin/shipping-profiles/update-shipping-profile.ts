@@ -10,13 +10,9 @@ import { EntityManager } from "typeorm"
 import { ShippingProfileType } from "../../../../models"
 import { ShippingProfileService } from "../../../../services"
 import { validator } from "../../../../utils/validator"
-import {
-  defaultAdminShippingProfilesFields,
-  defaultAdminShippingProfilesRelations,
-} from "."
 
 /**
- * @oas [post] /admin/shipping-profiles/{id}
+ * @oas [post] /shipping-profiles/{id}
  * operationId: "PostShippingProfilesProfile"
  * summary: "Update a Shipping Profile"
  * description: "Updates a Shipping Profile"
@@ -55,7 +51,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Shipping Profiles
+ *   - Shipping Profile
  * responses:
  *   200:
  *     description: OK
@@ -95,11 +91,7 @@ export default async (req, res) => {
       .update(profile_id, validated)
   })
 
-  const data = await profileService.retrieve(profile_id, {
-    select: defaultAdminShippingProfilesFields,
-    relations: defaultAdminShippingProfilesRelations,
-  })
-
+  const data = await profileService.retrieve(profile_id)
   res.status(200).json({ shipping_profile: data })
 }
 

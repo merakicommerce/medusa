@@ -99,10 +99,6 @@ export const defaultAdminTaxRatesFields: (keyof TaxRate)[] = [
 /**
  * @schema AdminTaxRatesDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -121,11 +117,6 @@ export type AdminTaxRatesDeleteRes = DeleteResponse
 /**
  * @schema AdminTaxRatesListRes
  * type: object
- * required:
- *   - tax_rates
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   tax_rates:
  *     type: array
@@ -148,8 +139,6 @@ export type AdminTaxRatesListRes = PaginatedResponse & {
 /**
  * @schema AdminTaxRatesRes
  * type: object
- * required:
- *   - tax_rate
  * properties:
  *   tax_rate:
  *     $ref: "#/components/schemas/TaxRate"

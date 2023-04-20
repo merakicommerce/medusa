@@ -15,18 +15,24 @@ type InjectedDependencies = {
 }
 
 class AnalyticsConfigService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly analyticsConfigRepository_: typeof AnalyticsRepository
   protected readonly userService_: UserService
 
-  constructor({ analyticsConfigRepository }: InjectedDependencies) {
+  constructor({ analyticsConfigRepository, manager }: InjectedDependencies) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.analyticsConfigRepository_ = analyticsConfigRepository
   }
 
   async retrieve(userId: string): Promise<AnalyticsConfig> {
-    const analyticsRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+
+    const analyticsRepo = manager.getCustomRepository(
       this.analyticsConfigRepository_
     )
 
@@ -51,7 +57,8 @@ class AnalyticsConfigService extends TransactionBaseService {
     userId: string,
     data: CreateAnalyticsConfig
   ): Promise<AnalyticsConfig> {
-    const analyticsRepo = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ || this.manager_
+    const analyticsRepo = manager.getCustomRepository(
       this.analyticsConfigRepository_
     )
 
@@ -66,7 +73,9 @@ class AnalyticsConfigService extends TransactionBaseService {
     userId: string,
     update: UpdateAnalyticsConfig
   ): Promise<AnalyticsConfig> {
-    const analyticsRepo = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ || this.manager_
+
+    const analyticsRepo = manager.getCustomRepository(
       this.analyticsConfigRepository_
     )
 
@@ -92,7 +101,8 @@ class AnalyticsConfigService extends TransactionBaseService {
    * Deletes an analytics config.
    */
   async delete(userId: string): Promise<void> {
-    const analyticsRepo = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ || this.manager_
+    const analyticsRepo = manager.getCustomRepository(
       this.analyticsConfigRepository_
     )
 

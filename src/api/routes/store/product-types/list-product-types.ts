@@ -9,7 +9,7 @@ import { IsType } from "../../../../utils/validators/is-type"
 import ProductTypeService from "../../../../services/product-type"
 
 /**
- * @oas [get] /store/product-types
+ * @oas [get] /product-types
  * operationId: "GetProductTypes"
  * summary: "List Product Types"
  * description: "Retrieve a list of Product Types."
@@ -105,7 +105,7 @@ import ProductTypeService from "../../../../services/product-type"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Product Types
+ *   - Product Type
  * responses:
  *  "200":
  *    description: OK

@@ -4,7 +4,7 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/notes/{id}
+ * @oas [post] /notes/{id}
  * operationId: "PostNotesNote"
  * summary: "Update a Note"
  * x-authenticated: true
@@ -44,7 +44,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Notes
+ *   - Note
  * responses:
  *   200:
  *     description: OK

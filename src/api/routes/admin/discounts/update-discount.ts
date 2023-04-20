@@ -23,7 +23,7 @@ import { Type } from "class-transformer"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [post] /admin/discounts/{id}
+ * @oas [post] /discounts/{id}
  * operationId: "PostDiscountsDiscount"
  * summary: "Update a Discount"
  * description: "Updates a Discount with a given set of rules that define how the Discount behaves."
@@ -66,7 +66,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount
  * responses:
  *   200:
  *     description: OK

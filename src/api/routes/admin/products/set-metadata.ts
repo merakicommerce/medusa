@@ -3,10 +3,9 @@ import { defaultAdminProductFields, defaultAdminProductRelations } from "."
 import { IsString } from "class-validator"
 import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
-import { PricingService } from "../../../../services"
 
 /**
- * @oas [post] /admin/products/{id}/metadata
+ * @oas [post] /products/{id}/metadata
  * operationId: "PostProductsProductMetadata"
  * summary: "Set Product Metadata"
  * description: "Set metadata key/value pair for Product"
@@ -48,7 +47,7 @@ import { PricingService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -78,8 +77,6 @@ export default async (req, res) => {
   )
 
   const productService = req.scope.resolve("productService")
-  const pricingService: PricingService = req.scope.resolve("pricingService")
-
   const manager: EntityManager = req.scope.resolve("manager")
   await manager.transaction(async (transactionManager) => {
     return await productService.withTransaction(transactionManager).update(id, {
@@ -87,12 +84,10 @@ export default async (req, res) => {
     })
   })
 
-  const rawProduct = await productService.retrieve(id, {
+  const product = await productService.retrieve(id, {
     select: defaultAdminProductFields,
     relations: defaultAdminProductRelations,
   })
-
-  const [product] = await pricingService.setProductPrices([rawProduct])
 
   res.status(200).json({ product })
 }

@@ -2,7 +2,7 @@ import { StoreService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [delete] /admin/store/currencies/{code}
+ * @oas [delete] /store/currencies/{code}
  * operationId: "DeleteStoreCurrenciesCode"
  * summary: "Delete a Currency Code"
  * description: "Removes a Currency Code from the available currencies."
@@ -28,7 +28,7 @@ import { EntityManager } from "typeorm"
  *       // must be previously logged in or use api token
  *       medusa.admin.store.deleteCurrency('eur')
  *       .then(({ store }) => {
- *         console.log(store.currencies);
+ *         console.log(store.id);
  *       });
  *   - lang: Shell
  *     label: cURL

@@ -1,5 +1,5 @@
+import { EntityRepository, Repository } from "typeorm"
 import { Currency } from "../models"
-import { dataSource } from "../loaders/database"
 
-export const CurrencyRepository = dataSource.getRepository(Currency)
-export default CurrencyRepository
+@EntityRepository(Currency)
+export class CurrencyRepository extends Repository<Currency> {}

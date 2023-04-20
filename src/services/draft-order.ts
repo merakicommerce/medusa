@@ -1,13 +1,5 @@
-import { MedusaError } from "medusa-core-utils"
-import {
-  EntityManager,
-  FindOptionsWhere,
-  ILike,
-  IsNull,
-  Not,
-  Raw,
-  UpdateResult,
-} from "typeorm"
+import { isDefined, MedusaError } from "medusa-core-utils"
+import { Brackets, EntityManager, FindManyOptions, UpdateResult } from "typeorm"
 import { TransactionBaseService } from "../interfaces"
 import {
   CartType,
@@ -19,9 +11,8 @@ import {
 import { DraftOrderRepository } from "../repositories/draft-order"
 import { OrderRepository } from "../repositories/order"
 import { PaymentRepository } from "../repositories/payment"
-import { FindConfig } from "../types/common"
+import { ExtendedFindConfig, FindConfig } from "../types/common"
 import { DraftOrderCreateProps } from "../types/draft-orders"
-import { GenerateInputData } from "../types/line-item"
 import { buildQuery } from "../utils"
 import CartService from "./cart"
 import CustomShippingOptionService from "./custom-shipping-option"
@@ -29,7 +20,7 @@ import EventBusService from "./event-bus"
 import LineItemService from "./line-item"
 import ProductVariantService from "./product-variant"
 import ShippingOptionService from "./shipping-option"
-import { isDefined } from "@medusajs/utils"
+import { GenerateInputData } from "../types/line-item"
 
 type InjectedDependencies = {
   manager: EntityManager
@@ -54,6 +45,9 @@ class DraftOrderService extends TransactionBaseService {
     UPDATED: "draft_order.updated",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly draftOrderRepository_: typeof DraftOrderRepository
   protected readonly paymentRepository_: typeof PaymentRepository
   protected readonly orderRepository_: typeof OrderRepository
@@ -65,6 +59,7 @@ class DraftOrderService extends TransactionBaseService {
   protected readonly customShippingOptionService_: CustomShippingOptionService
 
   constructor({
+    manager,
     draftOrderRepository,
     paymentRepository,
     orderRepository,
@@ -78,6 +73,7 @@ class DraftOrderService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.draftOrderRepository_ = draftOrderRepository
     this.paymentRepository_ = paymentRepository
     this.orderRepository_ = orderRepository
@@ -106,7 +102,8 @@ class DraftOrderService extends TransactionBaseService {
       )
     }
 
-    const draftOrderRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const draftOrderRepo = manager.getCustomRepository(
       this.draftOrderRepository_
     )
 
@@ -132,7 +129,8 @@ class DraftOrderService extends TransactionBaseService {
     cartId: string,
     config: FindConfig<DraftOrder> = {}
   ): Promise<DraftOrder | never> {
-    const draftOrderRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const draftOrderRepo = manager.getCustomRepository(
       this.draftOrderRepository_
     )
 
@@ -156,7 +154,7 @@ class DraftOrderService extends TransactionBaseService {
   async delete(draftOrderId: string): Promise<DraftOrder | undefined> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const draftOrderRepo = transactionManager.withRepository(
+        const draftOrderRepo = transactionManager.getCustomRepository(
           this.draftOrderRepository_
         )
         const draftOrder = await draftOrderRepo.findOne({
@@ -185,45 +183,41 @@ class DraftOrderService extends TransactionBaseService {
       order: { created_at: "DESC" },
     }
   ): Promise<[DraftOrder[], number]> {
-    const draftOrderRepository = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const draftOrderRepository = manager.getCustomRepository(
       this.draftOrderRepository_
     )
 
     const { q, ...restSelector } = selector
-    const query = buildQuery(restSelector, config)
+    const query = buildQuery(
+      restSelector,
+      config
+    ) as FindManyOptions<DraftOrder> & ExtendedFindConfig<DraftOrder>
 
     if (q) {
-      query.where = query.where as FindOptionsWhere<DraftOrder>
-      delete query.where?.display_id
+      const where = query.where
+      delete where?.display_id
 
-      query.relations = query.relations ?? {}
-      query.relations.cart = query.relations.cart ?? true
-
-      const innerJoinLikeConstraint = {
-        cart: {
-          id: Not(IsNull()),
+      query.join = {
+        alias: "draft_order",
+        innerJoin: {
+          cart: "draft_order.cart",
         },
       }
 
-      query.where = query.where as FindOptionsWhere<DraftOrder>[]
-      query.where = [
-        {
-          ...query.where,
-          ...innerJoinLikeConstraint,
-          cart: {
-            ...innerJoinLikeConstraint.cart,
-            id: Not(IsNull()),
-            email: ILike(`%${q}%`),
-          },
-        },
-        {
-          ...query.where,
-          ...innerJoinLikeConstraint,
-          display_id: Raw((alias) => `CAST(${alias} as varchar) ILike :q`, {
-            q: `%${q}%`,
-          }),
-        },
-      ]
+      query.where = (qb): void => {
+        qb.where(where)
+
+        qb.andWhere(
+          new Brackets((qb) => {
+            qb.where(`cart.email ILIKE :q`, {
+              q: `%${q}%`,
+            }).orWhere(`draft_order.display_id::TEXT ILIKE :displayId`, {
+              displayId: `${q}`,
+            })
+          })
+        )
+      }
     }
 
     return await draftOrderRepository.findAndCount(query)
@@ -243,7 +237,8 @@ class DraftOrderService extends TransactionBaseService {
       order: { created_at: "DESC" },
     }
   ): Promise<DraftOrder[]> {
-    const draftOrderRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const draftOrderRepo = manager.getCustomRepository(
       this.draftOrderRepository_
     )
 
@@ -260,7 +255,7 @@ class DraftOrderService extends TransactionBaseService {
   async create(data: DraftOrderCreateProps): Promise<DraftOrder> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const draftOrderRepo = transactionManager.withRepository(
+        const draftOrderRepo = transactionManager.getCustomRepository(
           this.draftOrderRepository_
         )
 
@@ -424,7 +419,7 @@ class DraftOrderService extends TransactionBaseService {
   ): Promise<UpdateResult> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const draftOrderRepo = transactionManager.withRepository(
+        const draftOrderRepo = transactionManager.getCustomRepository(
           this.draftOrderRepository_
         )
         return await draftOrderRepo.update(
@@ -453,7 +448,7 @@ class DraftOrderService extends TransactionBaseService {
   ): Promise<DraftOrder> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const draftOrderRepo = transactionManager.withRepository(
+        const draftOrderRepo = transactionManager.getCustomRepository(
           this.draftOrderRepository_
         )
         const draftOrder = await this.retrieve(id)

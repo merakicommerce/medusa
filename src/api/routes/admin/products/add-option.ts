@@ -6,9 +6,9 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/products/{id}/options
+ * @oas [post] /products/{id}/options
  * operationId: "PostProductsProductOptions"
- * summary: "Add a Product Option"
+ * summary: "Add an Option"
  * x-authenticated: true
  * description: "Adds a Product Option to a Product"
  * parameters:
@@ -46,7 +46,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK

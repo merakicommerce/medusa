@@ -17,7 +17,7 @@ import { IsType } from "../../../../utils/validators/is-type"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [post] /store/carts/{id}
+ * @oas [post] /carts/{id}
  * operationId: PostCartsCart
  * summary: Update a Cart
  * description: "Updates a Cart."
@@ -51,7 +51,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *           "email": "user@example.com"
  *       }'
  * tags:
- *   - Carts
+ *   - Cart
  * responses:
  *   200:
  *     description: OK
@@ -137,14 +137,14 @@ class Discount {
  *   billing_address:
  *     description: "The Address to be used for billing purposes."
  *     anyOf:
- *       - $ref: "#/components/schemas/AddressPayload"
+ *       - $ref: "#/components/schemas/Address"
  *         description: A full billing address object.
  *       - type: string
  *         description: The billing address ID
  *   shipping_address:
  *     description: "The Address to be used for shipping."
  *     anyOf:
- *       - $ref: "#/components/schemas/AddressPayload"
+ *       - $ref: "#/components/schemas/Address"
  *         description: A full shipping address object.
  *       - type: string
  *         description: The shipping address ID
@@ -168,7 +168,7 @@ class Discount {
  *         - code
  *       properties:
  *         code:
- *           description: "The code that a Discount is identified by."
+ *           description: "The code that a Discount is identifed by."
  *           type: string
  *   customer_id:
  *     description: "The ID of the Customer to associate the Cart with."

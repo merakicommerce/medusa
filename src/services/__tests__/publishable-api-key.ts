@@ -1,8 +1,8 @@
 import { IdMap, MockManager, MockRepository } from "medusa-test-utils"
-import EventBusService from "../event-bus"
 
-import PublishableApiKeyService from "../publishable-api-key"
+import { EventBusService } from "../index"
 import { EventBusServiceMock } from "../__mocks__/event-bus"
+import PublishableApiKeyService from "../publishable-api-key"
 
 const pubKeyToRetrieve = {
   id: IdMap.getId("pub-key-to-retrieve"),
@@ -18,7 +18,7 @@ describe("PublishableApiKeyService", () => {
   })
 
   const publishableApiKeyRepository = MockRepository({
-    findOne: (data) => ({ ...pubKeyToRetrieve, ...data }),
+    findOneWithRelations: (data) => ({ ...pubKeyToRetrieve, ...data }),
     create: (data) => {
       return {
         ...pubKeyToRetrieve,
@@ -42,18 +42,13 @@ describe("PublishableApiKeyService", () => {
       IdMap.getId("order-edit-with-changes")
     )
     expect(
-      publishableApiKeyRepository.findOne
+      publishableApiKeyRepository.findOneWithRelations
     ).toHaveBeenCalledTimes(1)
     expect(
-      publishableApiKeyRepository.findOne
-    ).toHaveBeenCalledWith(
-      {
-        relationLoadStrategy: "query",
-        where: {
-          id: IdMap.getId("order-edit-with-changes")
-        }
-      }
-    )
+      publishableApiKeyRepository.findOneWithRelations
+    ).toHaveBeenCalledWith(undefined, {
+      where: { id: IdMap.getId("order-edit-with-changes") },
+    })
   })
 
   it("should create a publishable api key and call the repository with the right arguments as well as the event bus service", async () => {

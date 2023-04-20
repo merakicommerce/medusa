@@ -59,8 +59,6 @@ export default (app) => {
 /**
  * @schema AdminCustomerGroupsRes
  * type: object
- * required:
- *   - customer_group
  * properties:
  *   customer_group:
  *     $ref: "#/components/schemas/CustomerGroup"
@@ -72,10 +70,6 @@ export type AdminCustomerGroupsRes = {
 /**
  * @schema AdminCustomerGroupsDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -94,11 +88,6 @@ export type AdminCustomerGroupsDeleteRes = DeleteResponse
 /**
  * @schema AdminCustomerGroupsListRes
  * type: object
- * required:
- *   - customer_groups
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   customer_groups:
  *     type: array

@@ -5,7 +5,7 @@ import { EntityManager } from "typeorm"
 import PublishableApiKeyService from "../../../../services/publishable-api-key"
 
 /**
- * @oas [post] /admin/publishable-api-key/{id}
+ * @oas [post] /publishable-api-key/{id}
  * operationId: "PostPublishableApiKysPublishableApiKey"
  * summary: "Update PublishableApiKey"
  * description: "Updates a PublishableApiKey."
@@ -45,7 +45,7 @@ import PublishableApiKeyService from "../../../../services/publishable-api-key"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Publishable Api Keys
+ *   - PublishableApiKey
  * responses:
  *   200:
  *     description: OK

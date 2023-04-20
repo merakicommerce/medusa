@@ -1,6 +1,6 @@
-import { LineItemAdjustment } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { LineItemAdjustment } from "../models/line-item-adjustment"
 
-export const LineItemAdjustmentRepository =
-  dataSource.getRepository(LineItemAdjustment)
-export default LineItemAdjustmentRepository
+@EntityRepository(LineItemAdjustment)
+// eslint-disable-next-line max-len
+export class LineItemAdjustmentRepository extends Repository<LineItemAdjustment> {}

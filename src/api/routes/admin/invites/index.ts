@@ -35,10 +35,6 @@ export default (app) => {
 /**
  * @schema AdminInviteDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -57,8 +53,6 @@ export type AdminInviteDeleteRes = DeleteResponse
 /**
  * @schema AdminListInvitesRes
  * type: object
- * required:
- *   - invites
  * properties:
  *   invites:
  *     type: array

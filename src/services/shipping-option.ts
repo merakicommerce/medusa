@@ -13,7 +13,7 @@ import {
 import { ShippingMethodRepository } from "../repositories/shipping-method"
 import { ShippingOptionRepository } from "../repositories/shipping-option"
 import { ShippingOptionRequirementRepository } from "../repositories/shipping-option-requirement"
-import { FindConfig, Selector } from "../types/common"
+import { ExtendedFindConfig, FindConfig, Selector } from "../types/common"
 import {
   CreateShippingMethodDto,
   CreateShippingOptionInput,
@@ -49,7 +49,11 @@ class ShippingOptionService extends TransactionBaseService {
   protected readonly methodRepository_: typeof ShippingMethodRepository
   protected readonly featureFlagRouter_: FlagRouter
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   constructor({
+    manager,
     shippingOptionRepository,
     shippingOptionRequirementRepository,
     shippingMethodRepository,
@@ -60,6 +64,7 @@ class ShippingOptionService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.optionRepository_ = shippingOptionRepository
     this.methodRepository_ = shippingMethodRepository
     this.requirementRepository_ = shippingOptionRequirementRepository
@@ -96,18 +101,16 @@ class ShippingOptionService extends TransactionBaseService {
         )
       }
 
-      const reqRepo = manager.withRepository(this.requirementRepository_)
+      const reqRepo = manager.getCustomRepository(this.requirementRepository_)
 
-      const existingReq = requirement.id
-        ? await reqRepo.findOne({
-            where: { id: requirement.id },
-          })
-        : undefined
+      const existingReq = await reqRepo.findOne({
+        where: { id: requirement.id },
+      })
 
       if (!existingReq && requirement.id) {
         throw new MedusaError(
           MedusaError.Types.INVALID_DATA,
-          `Shipping option requirement with id ${requirement.id} does not exist`
+          "ID does not exist"
         )
       }
 
@@ -146,7 +149,8 @@ class ShippingOptionService extends TransactionBaseService {
     selector: Selector<ShippingMethod>,
     config: FindConfig<ShippingOption> = { skip: 0, take: 50 }
   ): Promise<ShippingOption[]> {
-    const optRepo = this.activeManager_.withRepository(this.optionRepository_)
+    const manager = this.manager_
+    const optRepo = manager.getCustomRepository(this.optionRepository_)
 
     const query = buildQuery(selector, config)
     return optRepo.find(query)
@@ -161,7 +165,8 @@ class ShippingOptionService extends TransactionBaseService {
     selector: Selector<ShippingOption>,
     config: FindConfig<ShippingOption> = { skip: 0, take: 50 }
   ): Promise<[ShippingOption[], number]> {
-    const optRepo = this.activeManager_.withRepository(this.optionRepository_)
+    const manager = this.manager_
+    const optRepo = manager.getCustomRepository(this.optionRepository_)
 
     const query = buildQuery(selector, config)
     return await optRepo.findAndCount(query)
@@ -176,7 +181,7 @@ class ShippingOptionService extends TransactionBaseService {
    */
   async retrieve(
     optionId,
-    options: FindConfig<ShippingOption> = {}
+    options: { select?: (keyof ShippingOption)[]; relations?: string[] } = {}
   ): Promise<ShippingOption> {
     if (!isDefined(optionId)) {
       throw new MedusaError(
@@ -185,9 +190,22 @@ class ShippingOptionService extends TransactionBaseService {
       )
     }
 
-    const soRepo = this.activeManager_.withRepository(this.optionRepository_)
+    const manager = this.manager_
+    const soRepo: ShippingOptionRepository = manager.getCustomRepository(
+      this.optionRepository_
+    )
 
-    const query = buildQuery({ id: optionId }, options)
+    const query: ExtendedFindConfig<ShippingOption> = {
+      where: { id: optionId },
+    }
+
+    if (options.select) {
+      query.select = options.select
+    }
+
+    if (options.relations) {
+      query.relations = options.relations
+    }
 
     const option = await soRepo.findOne(query)
 
@@ -213,7 +231,9 @@ class ShippingOptionService extends TransactionBaseService {
     update: ShippingMethodUpdate
   ): Promise<ShippingMethod | undefined> {
     return await this.atomicPhase_(async (manager) => {
-      const methodRepo = manager.withRepository(this.methodRepository_)
+      const methodRepo: ShippingMethodRepository = manager.getCustomRepository(
+        this.methodRepository_
+      )
       const method = await methodRepo.findOne({ where: { id } })
 
       if (!method) {
@@ -243,7 +263,7 @@ class ShippingOptionService extends TransactionBaseService {
       : [shippingMethods]
 
     return await this.atomicPhase_(async (manager) => {
-      const methodRepo = manager.withRepository(this.methodRepository_)
+      const methodRepo = manager.getCustomRepository(this.methodRepository_)
       return await methodRepo.remove(removeEntities)
     })
   }
@@ -265,7 +285,7 @@ class ShippingOptionService extends TransactionBaseService {
         relations: ["requirements"],
       })
 
-      const methodRepo = manager.withRepository(this.methodRepository_)
+      const methodRepo = manager.getCustomRepository(this.methodRepository_)
 
       if (isDefined(config.cart)) {
         await this.validateCartOption(option, config.cart)
@@ -434,7 +454,7 @@ class ShippingOptionService extends TransactionBaseService {
         price_type: data.price_type,
       })
 
-      const optionRepo = manager.withRepository(this.optionRepository_)
+      const optionRepo = manager.getCustomRepository(this.optionRepository_)
       const option = optionRepo.create(optionWithValidatedPrice)
 
       const region = await this.regionService_
@@ -657,7 +677,7 @@ class ShippingOptionService extends TransactionBaseService {
         }
       }
 
-      const optionRepo = manager.withRepository(this.optionRepository_)
+      const optionRepo = manager.getCustomRepository(this.optionRepository_)
       return await optionRepo.save(optionWithValidatedPrice)
     })
   }
@@ -673,7 +693,7 @@ class ShippingOptionService extends TransactionBaseService {
       try {
         const option = await this.retrieve(optionId)
 
-        const optionRepo = manager.withRepository(this.optionRepository_)
+        const optionRepo = manager.getCustomRepository(this.optionRepository_)
 
         return optionRepo.softRemove(option)
       } catch (error) {
@@ -709,7 +729,7 @@ class ShippingOptionService extends TransactionBaseService {
 
       option.requirements.push(validatedReq)
 
-      const optionRepo = manager.withRepository(this.optionRepository_)
+      const optionRepo = manager.getCustomRepository(this.optionRepository_)
       return optionRepo.save(option)
     })
   }
@@ -723,14 +743,14 @@ class ShippingOptionService extends TransactionBaseService {
     requirementId
   ): Promise<ShippingOptionRequirement | void> {
     return await this.atomicPhase_(async (manager) => {
-      const reqRepo = manager.withRepository(this.requirementRepository_)
+      const reqRepo: ShippingOptionRequirementRepository =
+        manager.getCustomRepository(this.requirementRepository_)
 
       const requirement = await reqRepo.findOne({
         where: { id: requirementId },
       })
-
       // Delete is idempotent, but we return a promise to allow then-chaining
-      if (!requirement) {
+      if (typeof requirement === "undefined") {
         return Promise.resolve()
       }
 
@@ -749,7 +769,7 @@ class ShippingOptionService extends TransactionBaseService {
     profileId: string
   ): Promise<ShippingOption[]> {
     return await this.atomicPhase_(async (manager) => {
-      const optionRepo = manager.withRepository(this.optionRepository_)
+      const optionRepo = manager.getCustomRepository(this.optionRepository_)
 
       const ids = isString(optionIds) ? [optionIds] : optionIds
 

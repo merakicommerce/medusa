@@ -4,7 +4,7 @@ import { EntityManager } from "typeorm"
 import { ProductService } from "../../../../services"
 
 /**
- * @oas [delete] /admin/products/{id}/options/{option_id}
+ * @oas [delete] /products/{id}/options/{option_id}
  * operationId: "DeleteProductsProductOptionsOption"
  * summary: "Delete a Product Option"
  * description: "Deletes a Product Option. Before a Product Option can be deleted all Option Values for the Product Option must be the same. You may, for example, have to delete some of your variants prior to deleting the Product Option"
@@ -22,7 +22,7 @@ import { ProductService } from "../../../../services"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
  *       medusa.admin.products.deleteOption(product_id, option_id)
- *       .then(({ option_id, object, deleted, product }) => {
+ *       .then(({ option_id, object, delete, product }) => {
  *         console.log(product.id);
  *       });
  *   - lang: Shell
@@ -34,7 +34,7 @@ import { ProductService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK

@@ -1,17 +1,12 @@
-import { IsBoolean, IsObject, IsOptional, IsString } from "class-validator"
-import {
-  ClaimService,
-  OrderService,
-  ProductVariantInventoryService,
-} from "../../../../services"
+import { ClaimService, OrderService } from "../../../../services"
+import { IsBoolean, IsObject, IsOptional } from "class-validator"
 
 import { EntityManager } from "typeorm"
 import { FindParams } from "../../../../types/common"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
-import { updateInventoryAndReservations } from "./create-fulfillment"
 
 /**
- * @oas [post] /admin/orders/{id}/claims/{claim_id}/fulfillments
+ * @oas [post] /orders/{id}/claims/{claim_id}/fulfillments
  * operationId: "PostOrdersOrderClaimsClaimFulfillments"
  * summary: "Create Claim Fulfillment"
  * description: "Creates a Fulfillment for a Claim."
@@ -49,7 +44,7 @@ import { updateInventoryAndReservations } from "./create-fulfillment"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Orders
+ *   - Fulfillment
  * responses:
  *   200:
  *     description: OK
@@ -78,51 +73,12 @@ export default async (req, res) => {
   const orderService: OrderService = req.scope.resolve("orderService")
   const claimService: ClaimService = req.scope.resolve("claimService")
   const entityManager: EntityManager = req.scope.resolve("manager")
-  const pvInventoryService: ProductVariantInventoryService = req.scope.resolve(
-    "productVariantInventoryService"
-  )
 
   await entityManager.transaction(async (manager) => {
-    const claimServiceTx = claimService.withTransaction(manager)
-
-    const { fulfillments: existingFulfillments } =
-      await claimServiceTx.retrieve(claim_id, {
-        relations: [
-          "fulfillments",
-          "fulfillments.items",
-          "fulfillments.items.item",
-        ],
-      })
-
-    const existingFulfillmentSet = new Set(
-      existingFulfillments.map((fulfillment) => fulfillment.id)
-    )
-
-    await claimServiceTx.createFulfillment(claim_id, {
+    await claimService.withTransaction(manager).createFulfillment(claim_id, {
       metadata: validated.metadata,
       no_notification: validated.no_notification,
-      location_id: validated.location_id,
     })
-
-    if (validated.location_id) {
-      const { fulfillments } = await claimServiceTx.retrieve(claim_id, {
-        relations: [
-          "fulfillments",
-          "fulfillments.items",
-          "fulfillments.items.item",
-        ],
-      })
-
-      const pvInventoryServiceTx = pvInventoryService.withTransaction(manager)
-
-      await updateInventoryAndReservations(
-        fulfillments.filter((f) => !existingFulfillmentSet.has(f.id)),
-        {
-          inventoryService: pvInventoryServiceTx,
-          locationId: validated.location_id,
-        }
-      )
-    }
   })
 
   const order = await orderService.retrieveWithTotals(id, req.retrieveConfig, {
@@ -151,10 +107,6 @@ export class AdminPostOrdersOrderClaimsClaimFulfillmentsReq {
   @IsBoolean()
   @IsOptional()
   no_notification?: boolean
-
-  @IsString()
-  @IsOptional()
-  location_id?: string
 }
 
 // eslint-disable-next-line max-len

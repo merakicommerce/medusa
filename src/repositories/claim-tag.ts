@@ -1,5 +1,5 @@
+import { EntityRepository, Repository } from "typeorm"
 import { ClaimTag } from "../models/claim-tag"
-import { dataSource } from "../loaders/database"
 
-export const ClaimTagRepository = dataSource.getRepository(ClaimTag)
-export default ClaimTagRepository
+@EntityRepository(ClaimTag)
+export class ClaimTagRepository extends Repository<ClaimTag> {}

@@ -9,7 +9,7 @@ import { pickBy } from "lodash"
 import { isDefined } from "medusa-core-utils"
 
 /**
- * @oas [get] /admin/batch-jobs
+ * @oas [get] /batch-jobs
  * operationId: "GetBatchJobs"
  * summary: "List Batch Jobs"
  * description: "Retrieve a list of Batch Jobs."
@@ -233,7 +233,7 @@ import { isDefined } from "medusa-core-utils"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Batch Jobs
+ *   - Batch Job
  * responses:
  *  "200":
  *    description: OK

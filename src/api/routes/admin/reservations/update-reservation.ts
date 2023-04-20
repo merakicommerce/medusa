@@ -1,14 +1,11 @@
-import { IInventoryService } from "@medusajs/types"
-import { isDefined } from "@medusajs/utils"
 import { IsNumber, IsObject, IsOptional, IsString } from "class-validator"
 import { EntityManager } from "typeorm"
-import { LineItemService } from "../../../../services"
-import { validateUpdateReservationQuantity } from "./utils/validate-reservation-quantity"
+import { IInventoryService } from "../../../../interfaces"
 
 /**
- * @oas [post] /admin/reservations/{id}
+ * @oas [post] /reservations/{id}
  * operationId: "PostReservationsReservation"
- * summary: "Update a Reservation"
+ * summary: "Updates a Reservation"
  * description: "Updates a Reservation which can be associated with any resource as required."
  * x-authenticated: true
  * parameters:
@@ -25,11 +22,11 @@ import { validateUpdateReservationQuantity } from "./utils/validate-reservation-
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.reservations.update(reservationId, {
+ *       medusa.admin.reservations.update(reservation.id, {
  *         quantity: 3
  *       })
- *       .then(({ reservation }) => {
- *         console.log(reservation.id);
+ *       .then(({ reservations }) => {
+ *         console.log(reservations.id);
  *       });
  *   - lang: Shell
  *     label: cURL
@@ -44,14 +41,14 @@ import { validateUpdateReservationQuantity } from "./utils/validate-reservation-
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Reservations
+ *   - Reservation
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminReservationsRes"
+ *           $ref: "#/components/schemas/AdminPostReservationsReq"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":
@@ -72,26 +69,14 @@ export default async (req, res) => {
   }
 
   const manager: EntityManager = req.scope.resolve("manager")
-  const lineItemService: LineItemService = req.scope.resolve("lineItemService")
 
   const inventoryService: IInventoryService =
     req.scope.resolve("inventoryService")
 
-  const reservation = await inventoryService.retrieveReservationItem(id)
-
-  if (reservation.line_item_id && isDefined(validatedBody.quantity)) {
-    await validateUpdateReservationQuantity(
-      reservation.line_item_id,
-      validatedBody.quantity - reservation.quantity,
-      {
-        lineItemService,
-        inventoryService,
-      }
-    )
-  }
-
   const result = await manager.transaction(async (manager) => {
-    await inventoryService.updateReservationItem(id, validatedBody)
+    await inventoryService
+      .withTransaction(manager)
+      .updateReservationItem(id, validatedBody)
   })
 
   res.status(200).json({ reservation: result })

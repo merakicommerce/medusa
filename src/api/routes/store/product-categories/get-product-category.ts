@@ -3,10 +3,10 @@ import { Request, Response } from "express"
 import ProductCategoryService from "../../../../services/product-category"
 import { FindParams } from "../../../../types/common"
 import { transformTreeNodesWithConfig } from "../../../../utils/transformers/tree"
-import { defaultStoreCategoryScope } from "."
+import { defaultStoreScope } from "."
 
 /**
- * @oas [get] /store/product-categories/{id}
+ * @oas [get] /product-categories/{id}
  * operationId: "GetProductCategoriesCategory"
  * summary: "Get a Product Category"
  * description: "Retrieves a Product Category."
@@ -17,7 +17,7 @@ import { defaultStoreCategoryScope } from "."
  *   - (query) fields {string} (Comma separated) Which fields should be retrieved in each product category.
  * x-codegen:
  *   method: retrieve
- *   queryParams: StoreGetProductCategoriesCategoryParams
+ *   queryParams: StoreGetProductCategoryParams
  * x-codeSamples:
  *   - lang: JavaScript
  *     label: JS Client
@@ -38,7 +38,7 @@ import { defaultStoreCategoryScope } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Product Categories
+ *   - Product Category
  * responses:
  *  "200":
  *    description: OK
@@ -70,7 +70,7 @@ export default async (req: Request, res: Response) => {
   const productCategory = await productCategoryService.retrieve(
     id,
     retrieveConfig,
-    defaultStoreCategoryScope
+    defaultStoreScope
   )
 
   res.status(200).json({
@@ -80,9 +80,9 @@ export default async (req: Request, res: Response) => {
     product_category: transformTreeNodesWithConfig(
       productCategory,
       retrieveConfig,
-      defaultStoreCategoryScope
+      defaultStoreScope
     ),
   })
 }
 
-export class StoreGetProductCategoriesCategoryParams extends FindParams {}
+export class StoreGetProductCategoryParams extends FindParams {}

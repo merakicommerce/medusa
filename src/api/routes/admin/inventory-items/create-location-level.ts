@@ -1,13 +1,17 @@
-import { IInventoryService, IStockLocationService } from "@medusajs/types"
-import { IsNumber, IsOptional, IsString } from "class-validator"
 import { Request, Response } from "express"
+import { IsNumber, IsOptional, IsString } from "class-validator"
+
+import {
+  IInventoryService,
+  IStockLocationService,
+} from "../../../../interfaces"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [post] /admin/inventory-items/{id}/location-levels
+ * @oas [post] /inventory-items/{id}/location-levels
  * operationId: "PostInventoryItemsInventoryItemLocationLevels"
- * summary: "Create an Inventory Level"
- * description: "Creates an Inventory Level for a given Inventory Item."
+ * summary: "Create an Inventory Location Level for a given Inventory Item."
+ * description: "Creates an Inventory Location Level for a given Inventory Item."
  * x-authenticated: true
  * parameters:
  *   - (path) id=* {string} The ID of the Inventory Item.
@@ -18,9 +22,6 @@ import { FindParams } from "../../../../types/common"
  *     application/json:
  *       schema:
  *         $ref: "#/components/schemas/AdminPostInventoryItemsItemLocationLevelsReq"
- * x-codegen:
- *   method: createLocationLevel
- *   queryParams: AdminPostInventoryItemsItemLocationLevelsParams
  * x-codeSamples:
  *   - lang: JavaScript
  *     label: JS Client
@@ -29,7 +30,7 @@ import { FindParams } from "../../../../types/common"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
  *       medusa.admin.inventoryItems.createLocationLevel(inventoryItemId, {
- *         location_id: 'sloc_123',
+ *         location_id: 'sloc',
  *         stocked_quantity: 10,
  *       })
  *       .then(({ inventory_item }) => {
@@ -42,7 +43,7 @@ import { FindParams } from "../../../../types/common"
  *       --header 'Authorization: Bearer {api_token}' \
  *       --header 'Content-Type: application/json' \
  *       --data-raw '{
- *           "location_id": "sloc_123",
+ *           "location_id": "sloc",
  *           "stocked_quantity": 10
  *       }'
  * security:

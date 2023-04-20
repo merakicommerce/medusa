@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm"
 import { OrderEditService } from "../../../../services"
 
 /**
- * @oas [delete] /admin/order-edits/{id}
+ * @oas [delete] /order-edits/{id}
  * operationId: "DeleteOrderEditsOrderEdit"
  * summary: "Delete an Order Edit"
  * description: "Delete an Order Edit"
@@ -31,7 +31,7 @@ import { OrderEditService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK

@@ -2,7 +2,7 @@ import { DraftOrderService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [delete] /admin/draft-orders/{id}
+ * @oas [delete] /draft-orders/{id}
  * operationId: DeleteDraftOrdersDraftOrder
  * summary: Delete a Draft Order
  * description: "Deletes a Draft Order"
@@ -31,7 +31,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Draft Orders
+ *   - Draft Order
  * responses:
  *   200:
  *     description: OK

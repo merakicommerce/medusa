@@ -6,7 +6,7 @@ import { EntityManager } from "typeorm"
 import SalesChannelService from "../../../../services/sales-channel"
 
 /**
- * @oas [post] /admin/sales-channels
+ * @oas [post] /sales-channels
  * operationId: "PostSalesChannels"
  * summary: "Create a Sales Channel"
  * description: "Creates a Sales Channel."
@@ -45,7 +45,7 @@ import SalesChannelService from "../../../../services/sales-channel"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Sales Channels
+ *   - Sales Channel
  * responses:
  *   200:
  *     description: OK

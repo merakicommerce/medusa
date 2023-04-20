@@ -9,7 +9,7 @@ import { SalesChannelService } from "../../../../services"
 import { Type } from "class-transformer"
 
 /**
- * @oas [get] /admin/sales-channels
+ * @oas [get] /sales-channels
  * operationId: "GetSalesChannels"
  * summary: "List Sales Channels"
  * description: "Retrieves a list of sales channels"
@@ -113,7 +113,7 @@ import { Type } from "class-transformer"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Sales Channels
+ *   - Sales Channel
  * responses:
  *   200:
  *     description: OK

@@ -1,19 +1,19 @@
 import {
-  IInventoryService,
   InventoryItemDTO,
   InventoryLevelDTO,
-} from "@medusajs/types"
-import { SalesChannel } from "../../../../models"
+} from "../../../../types/inventory"
+import ProductVariantInventoryService from "../../../../services/product-variant-inventory"
 import {
   SalesChannelLocationService,
   SalesChannelService,
 } from "../../../../services"
+import { SalesChannel } from "../../../../models"
+import { IInventoryService } from "../../../../interfaces"
 import ProductVariantService from "../../../../services/product-variant"
-import ProductVariantInventoryService from "../../../../services/product-variant-inventory"
 import { joinLevels } from "../inventory-items/utils/join-levels"
 
 /**
- * @oas [get] /admin/variants/{id}/inventory
+ * @oas [get] /variants/{id}/inventory
  * operationId: "GetVariantsVariantInventory"
  * summary: "Get inventory of Variant."
  * description: "Returns the available inventory of a Variant."
@@ -42,7 +42,7 @@ import { joinLevels } from "../inventory-items/utils/join-levels"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Variants
+ *   - Product Variant
  * responses:
  *   200:
  *     description: OK
@@ -72,9 +72,6 @@ export default async (req, res) => {
 
   const inventoryService: IInventoryService =
     req.scope.resolve("inventoryService")
-  const channelLocationService: SalesChannelLocationService = req.scope.resolve(
-    "salesChannelLocationService"
-  )
 
   const channelService: SalesChannelService = req.scope.resolve(
     "salesChannelService"
@@ -88,32 +85,24 @@ export default async (req, res) => {
 
   const variant = await variantService.retrieve(id, { select: ["id"] })
 
-  const responseVariant: VariantInventory = {
+  const responseVariant: AdminGetVariantsVariantInventoryRes = {
     id: variant.id,
     inventory: [],
     sales_channel_availability: [],
   }
 
-  const [rawChannels] = await channelService.listAndCount({})
-  const channels: SalesChannelDTO[] = await Promise.all(
-    rawChannels.map(async (channel) => {
-      const locationIds = await channelLocationService.listLocationIds(
-        channel.id
-      )
-      return {
-        ...channel,
-        locations: locationIds,
-      }
-    })
+  const [channels] = await channelService.listAndCount(
+    {},
+    {
+      relations: ["locations"],
+    }
   )
-
-  const variantInventoryItems =
-    await productVariantInventoryService.listByVariant(variant.id)
 
   const inventory =
     await productVariantInventoryService.listInventoryItemsByVariant(variant.id)
   responseVariant.inventory = await joinLevels(inventory, [], inventoryService)
 
+  // TODO: adjust for required quantity
   if (inventory.length) {
     responseVariant.sales_channel_availability = await Promise.all(
       channels.map(async (channel) => {
@@ -125,12 +114,10 @@ export default async (req, res) => {
           }
         }
 
-        const quantity =
-          // eslint-disable-next-line max-len
-          await productVariantInventoryService.getVariantQuantityFromVariantInventoryItems(
-            variantInventoryItems,
-            channel.id
-          )
+        const quantity = await inventoryService.retrieveAvailableQuantity(
+          inventory[0].id,
+          channel.locations.map((loc) => loc.id)
+        )
 
         return {
           channel_name: channel.name as string,
@@ -146,31 +133,12 @@ export default async (req, res) => {
   })
 }
 
-type SalesChannelDTO = Omit<SalesChannel, "beforeInsert" | "locations"> & {
-  locations: string[]
-}
-
-export type LevelWithAvailability = InventoryLevelDTO & {
-  available_quantity: number
+type ResponseInventoryItem = Partial<InventoryItemDTO> & {
+  location_levels?: InventoryLevelDTO[]
 }
 
 /**
- * @schema ResponseInventoryItem
- * allOf:
- *   - $ref: "#/components/schemas/InventoryItemDTO"
- *   - type: object
- *     required:
- *      - available_quantity
- *     properties:
- *       available_quantity:
- *         type: number
- */
-export type ResponseInventoryItem = Partial<InventoryItemDTO> & {
-  location_levels?: LevelWithAvailability[]
-}
-
-/**
- * @schema VariantInventory
+ * @schema AdminGetVariantsVariantInventoryRes
  * type: object
  * properties:
  *   id:
@@ -178,7 +146,7 @@ export type ResponseInventoryItem = Partial<InventoryItemDTO> & {
  *     type: string
  *   inventory:
  *     description: the stock location address ID
- *     $ref: "#/components/schemas/ResponseInventoryItem"
+ *     type: string
  *   sales_channel_availability:
  *     type: object
  *     description: An optional key-value map with additional details
@@ -193,7 +161,7 @@ export type ResponseInventoryItem = Partial<InventoryItemDTO> & {
  *         description: Available quantity in sales channel
  *         type: number
  */
-export type VariantInventory = {
+export type AdminGetVariantsVariantInventoryRes = {
   id: string
   inventory: ResponseInventoryItem[]
   sales_channel_availability: {
@@ -201,16 +169,4 @@ export type VariantInventory = {
     channel_id: string
     available_quantity: number
   }[]
-}
-
-/**
- * @schema AdminGetVariantsVariantInventoryRes
- * type: object
- * properties:
- *   variant:
- *     type: object
- *     $ref: "#/components/schemas/VariantInventory"
- */
-export type AdminGetVariantsVariantInventoryRes = {
-  variant: VariantInventory
 }

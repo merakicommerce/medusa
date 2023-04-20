@@ -1,24 +1,23 @@
+import { EntityManager, ILike } from "typeorm"
 import { isDefined, MedusaError } from "medusa-core-utils"
-import { EntityManager, FindOptionsWhere, ILike } from "typeorm"
 
-import { TransactionBaseService } from "../interfaces"
-import { PublishableApiKey, SalesChannel } from "../models"
 import { PublishableApiKeyRepository } from "../repositories/publishable-api-key"
-import { PublishableApiKeySalesChannelRepository } from "../repositories/publishable-api-key-sales-channel"
 import { FindConfig, Selector } from "../types/common"
+import { PublishableApiKey, SalesChannel } from "../models"
+import { TransactionBaseService } from "../interfaces"
+import EventBusService from "./event-bus"
+import { buildQuery, isString } from "../utils"
 import {
   CreatePublishableApiKeyInput,
   UpdatePublishableApiKeyInput,
 } from "../types/publishable-api-key"
-import { buildQuery, isString } from "../utils"
-import EventBusService from "./event-bus"
+import { PublishableApiKeySalesChannelRepository } from "../repositories/publishable-api-key-sales-channel"
 
 type InjectedDependencies = {
   manager: EntityManager
 
   eventBusService: EventBusService
   publishableApiKeyRepository: typeof PublishableApiKeyRepository
-  // eslint-disable-next-line max-len
   publishableApiKeySalesChannelRepository: typeof PublishableApiKeySalesChannelRepository
 }
 
@@ -31,20 +30,22 @@ class PublishableApiKeyService extends TransactionBaseService {
     REVOKED: "publishable_api_key.revoked",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly eventBusService_: EventBusService
-  // eslint-disable-next-line max-len
   protected readonly publishableApiKeyRepository_: typeof PublishableApiKeyRepository
-  // eslint-disable-next-line max-len
   protected readonly publishableApiKeySalesChannelRepository_: typeof PublishableApiKeySalesChannelRepository
 
   constructor({
+    manager,
     eventBusService,
     publishableApiKeyRepository,
     publishableApiKeySalesChannelRepository,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.eventBusService_ = eventBusService
     this.publishableApiKeyRepository_ = publishableApiKeyRepository
     this.publishableApiKeySalesChannelRepository_ =
@@ -64,7 +65,7 @@ class PublishableApiKeyService extends TransactionBaseService {
     }
   ): Promise<PublishableApiKey | never> {
     return await this.atomicPhase_(async (manager) => {
-      const publishableApiKeyRepo = manager.withRepository(
+      const publishableApiKeyRepo = manager.getCustomRepository(
         this.publishableApiKeyRepository_
       )
 
@@ -113,14 +114,15 @@ class PublishableApiKeyService extends TransactionBaseService {
     selector: Selector<PublishableApiKey>,
     config: FindConfig<PublishableApiKey> = {}
   ): Promise<PublishableApiKey | never> {
-    const repo = this.activeManager_.withRepository(
+    const repo = this.manager_.getCustomRepository(
       this.publishableApiKeyRepository_
     )
 
-    const query = buildQuery(selector, config)
-    query.relationLoadStrategy = "query"
-
-    const publishableApiKey = await repo.findOne(query)
+    const { relations, ...query } = buildQuery(selector, config)
+    const publishableApiKey = await repo.findOneWithRelations(
+      relations as (keyof PublishableApiKey)[],
+      query
+    )
 
     if (!publishableApiKey) {
       const selectorConstraints = Object.entries(selector)
@@ -148,7 +150,8 @@ class PublishableApiKeyService extends TransactionBaseService {
       take: 20,
     }
   ): Promise<[PublishableApiKey[], number]> {
-    const pubKeyRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const pubKeyRepo = manager.getCustomRepository(
       this.publishableApiKeyRepository_
     )
 
@@ -159,7 +162,6 @@ class PublishableApiKeyService extends TransactionBaseService {
     }
 
     const query = buildQuery(selector, config)
-    query.where = query.where as FindOptionsWhere<PublishableApiKey>
 
     if (q) {
       query.where.title = ILike(`%${q}%`)
@@ -174,7 +176,7 @@ class PublishableApiKeyService extends TransactionBaseService {
   ): Promise<PublishableApiKey> {
     {
       return await this.atomicPhase_(async (manager) => {
-        const publishableApiKeyRepository = manager.withRepository(
+        const publishableApiKeyRepository = manager.getCustomRepository(
           this.publishableApiKeyRepository_
         )
 
@@ -198,7 +200,9 @@ class PublishableApiKeyService extends TransactionBaseService {
    */
   async delete(publishableApiKeyId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const repo = manager.withRepository(this.publishableApiKeyRepository_)
+      const repo = manager.getCustomRepository(
+        this.publishableApiKeyRepository_
+      )
 
       const publishableApiKey = await this.retrieve(publishableApiKeyId).catch()
 
@@ -221,7 +225,9 @@ class PublishableApiKeyService extends TransactionBaseService {
     }
   ): Promise<void | never> {
     return await this.atomicPhase_(async (manager) => {
-      const repo = manager.withRepository(this.publishableApiKeyRepository_)
+      const repo = manager.getCustomRepository(
+        this.publishableApiKeyRepository_
+      )
 
       const pubKey = await this.retrieve(publishableApiKeyId)
 
@@ -266,7 +272,7 @@ class PublishableApiKeyService extends TransactionBaseService {
     salesChannelIds: string[]
   ): Promise<void | never> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const pubKeySalesChannelRepo = transactionManager.withRepository(
+      const pubKeySalesChannelRepo = transactionManager.getCustomRepository(
         this.publishableApiKeySalesChannelRepository_
       )
 
@@ -288,7 +294,7 @@ class PublishableApiKeyService extends TransactionBaseService {
     salesChannelIds: string[]
   ): Promise<void | never> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const pubKeySalesChannelRepo = transactionManager.withRepository(
+      const pubKeySalesChannelRepo = transactionManager.getCustomRepository(
         this.publishableApiKeySalesChannelRepository_
       )
 
@@ -309,7 +315,8 @@ class PublishableApiKeyService extends TransactionBaseService {
     publishableApiKeyId: string,
     config?: { q?: string }
   ): Promise<SalesChannel[]> {
-    const pubKeySalesChannelRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const pubKeySalesChannelRepo = manager.getCustomRepository(
       this.publishableApiKeySalesChannelRepository_
     )
 
@@ -326,8 +333,9 @@ class PublishableApiKeyService extends TransactionBaseService {
    */
   async getResourceScopes(
     publishableApiKeyId: string
-  ): Promise<{ sales_channel_ids: string[] }> {
-    const pubKeySalesChannelRepo = this.activeManager_.withRepository(
+  ): Promise<{ sales_channel_id: string[] }> {
+    const manager = this.manager_
+    const pubKeySalesChannelRepo = manager.getCustomRepository(
       this.publishableApiKeySalesChannelRepository_
     )
 
@@ -337,7 +345,7 @@ class PublishableApiKeyService extends TransactionBaseService {
     })
 
     return {
-      sales_channel_ids: salesChannels.map(
+      sales_channel_id: salesChannels.map(
         ({ sales_channel_id }) => sales_channel_id
       ),
     }

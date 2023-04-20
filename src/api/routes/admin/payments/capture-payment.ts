@@ -1,7 +1,7 @@
 import { PaymentService } from "../../../../services"
 
 /**
- * @oas [post] /admin/payments/{id}/capture
+ * @oas [post] /payments/{id}/capture
  * operationId: "PostPaymentsPaymentCapture"
  * summary: "Capture a Payment"
  * description: "Captures a Payment."
@@ -30,7 +30,7 @@ import { PaymentService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Payments
+ *   - Payment
  * responses:
  *   200:
  *     description: OK

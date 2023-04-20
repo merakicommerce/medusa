@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, Min, IsNotEmpty } from "class-validator"
+import { IsOptional, IsString } from "class-validator"
 import { Request, Response } from "express"
 import { EntityManager } from "typeorm"
 
@@ -7,7 +7,7 @@ import { AdminProductCategoriesReqBase } from "../../../../types/product-categor
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [post] /admin/product-categories/{id}
+ * @oas [post] /product-categories/{id}
  * operationId: "PostProductCategoriesCategory"
  * summary: "Update a Product Category"
  * description: "Updates a Product Category."
@@ -31,7 +31,7 @@ import { FindParams } from "../../../../types/common"
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.productCategories.update(productCategoryId, {
+ *       medusa.admin.productCategories.update(product_category_id, {
  *         name: "Skinny Jeans"
  *       })
  *       .then(({ product_category }) => {
@@ -50,7 +50,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Product Categories
+ *   - Product Category
  * responses:
  *  "200":
  *    description: OK
@@ -103,9 +103,6 @@ export default async (req: Request, res: Response) => {
  *   name:
  *     type: string
  *     description:  The name to identify the Product Category by.
- *   description:
- *     type: string
- *     description: An optional text field to describe the Product Category by.
  *   handle:
  *     type: string
  *     description:  A handle to be used in slugs.
@@ -118,26 +115,12 @@ export default async (req: Request, res: Response) => {
  *   parent_category_id:
  *     type: string
  *     description: The ID of the parent product category
- *   rank:
- *     type: number
- *     description: The rank of the category in the tree node (starting from 0)
  */
 // eslint-disable-next-line max-len
 export class AdminPostProductCategoriesCategoryReq extends AdminProductCategoriesReqBase {
   @IsString()
   @IsOptional()
   name?: string
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  handle?: string
-
-  @IsOptional()
-  @IsInt()
-  @IsNotEmpty()
-  @Min(0)
-  rank?: number
 }
 
 export class AdminPostProductCategoriesCategoryParams extends FindParams {}

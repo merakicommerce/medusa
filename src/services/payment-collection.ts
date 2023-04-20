@@ -1,25 +1,28 @@
-import { isDefined, MedusaError } from "medusa-core-utils"
 import { DeepPartial, EntityManager } from "typeorm"
+import { isDefined, MedusaError } from "medusa-core-utils"
 
+import { FindConfig } from "../types/common"
+import { buildQuery, isString, setMetadata } from "../utils"
+import { PaymentCollectionRepository } from "../repositories/payment-collection"
 import {
   PaymentCollection,
   PaymentCollectionStatus,
   PaymentSession,
   PaymentSessionStatus,
 } from "../models"
-import { PaymentCollectionRepository } from "../repositories/payment-collection"
-import { FindConfig } from "../types/common"
-import { buildQuery, isString, setMetadata } from "../utils"
-import { CustomerService, PaymentProviderService } from "./index"
-
 import { TransactionBaseService } from "../interfaces"
-import { CreatePaymentInput, PaymentSessionInput } from "../types/payment"
+import {
+  CustomerService,
+  EventBusService,
+  PaymentProviderService,
+} from "./index"
+
 import {
   CreatePaymentCollectionInput,
   PaymentCollectionsSessionsBatchInput,
   PaymentCollectionsSessionsInput,
 } from "../types/payment-collection"
-import EventBusService from "./event-bus"
+import { CreatePaymentInput, PaymentSessionInput } from "../types/payment"
 
 type InjectedDependencies = {
   manager: EntityManager
@@ -37,6 +40,8 @@ export default class PaymentCollectionService extends TransactionBaseService {
     PAYMENT_AUTHORIZED: "payment-collection.payment_authorized",
   }
 
+  protected readonly manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
   protected readonly eventBusService_: EventBusService
   protected readonly paymentProviderService_: PaymentProviderService
   protected readonly customerService_: CustomerService
@@ -44,6 +49,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
   protected readonly paymentCollectionRepository_: typeof PaymentCollectionRepository
 
   constructor({
+    manager,
     paymentCollectionRepository,
     paymentProviderService,
     customerService,
@@ -52,6 +58,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.paymentCollectionRepository_ = paymentCollectionRepository
     this.paymentProviderService_ = paymentProviderService
     this.eventBusService_ = eventBusService
@@ -75,7 +82,8 @@ export default class PaymentCollectionService extends TransactionBaseService {
       )
     }
 
-    const paymentCollectionRepository = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ ?? this.manager_
+    const paymentCollectionRepository = manager.getCustomRepository(
       this.paymentCollectionRepository_
     )
 
@@ -102,7 +110,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
    */
   async create(data: CreatePaymentCollectionInput): Promise<PaymentCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const paymentCollectionRepository = manager.withRepository(
+      const paymentCollectionRepository = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -140,7 +148,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     data: DeepPartial<PaymentCollection>
   ): Promise<PaymentCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const paymentCollectionRepo = manager.withRepository(
+      const paymentCollectionRepo = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -173,7 +181,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     paymentCollectionId: string
   ): Promise<PaymentCollection | undefined> {
     return await this.atomicPhase_(async (manager) => {
-      const paymentCollectionRepo = manager.withRepository(
+      const paymentCollectionRepo = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -228,7 +236,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     customerId: string
   ): Promise<PaymentCollection> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const paymentCollectionRepository = manager.withRepository(
+      const paymentCollectionRepository = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -409,7 +417,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     customerId: string
   ): Promise<PaymentSession> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const paymentCollectionRepository = manager.withRepository(
+      const paymentCollectionRepository = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -417,12 +425,11 @@ export default class PaymentCollectionService extends TransactionBaseService {
         await paymentCollectionRepository.getPaymentCollectionIdBySessionId(
           sessionId,
           {
-            relations: {
-              region: {
-                payment_providers: true,
-              },
-              payment_sessions: true,
-            },
+            relations: [
+              "region",
+              "region.payment_providers",
+              "payment_sessions",
+            ],
           }
         )
 
@@ -500,7 +507,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     paymentCollectionId: string
   ): Promise<PaymentCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const paymentCollectionRepo = manager.withRepository(
+      const paymentCollectionRepo = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 
@@ -531,7 +538,7 @@ export default class PaymentCollectionService extends TransactionBaseService {
     context: Record<string, unknown> = {}
   ): Promise<PaymentCollection> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const paymentCollectionRepository = manager.withRepository(
+      const paymentCollectionRepository = manager.getCustomRepository(
         this.paymentCollectionRepository_
       )
 

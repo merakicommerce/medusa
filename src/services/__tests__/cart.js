@@ -65,7 +65,7 @@ describe("CartService", () => {
   describe("retrieve", () => {
     let result
     const cartRepository = MockRepository({
-      findOne: () =>
+      findOneWithRelations: () =>
         Promise.resolve({ id: IdMap.getId("emptyCart") }),
     })
     beforeAll(async () => {
@@ -82,8 +82,9 @@ describe("CartService", () => {
     })
 
     it("calls cart model functions", () => {
-      expect(cartRepository.findOne).toHaveBeenCalledTimes(1)
-      expect(cartRepository.findOne).toHaveBeenCalledWith(
+      expect(cartRepository.findOneWithRelations).toHaveBeenCalledTimes(1)
+      expect(cartRepository.findOneWithRelations).toHaveBeenCalledWith(
+        undefined,
         {
           where: { id: IdMap.getId("emptyCart") },
           select: undefined,
@@ -128,7 +129,7 @@ describe("CartService", () => {
       )
 
       expect(cartRepository.findOne).toBeCalledTimes(1)
-      expect(cartRepository.findOne).toBeCalledWith({ where: { id } })
+      expect(cartRepository.findOne).toBeCalledWith(id)
 
       expect(cartRepository.save).toBeCalledTimes(1)
       expect(cartRepository.save).toBeCalledWith({
@@ -345,7 +346,7 @@ describe("CartService", () => {
     }
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("cartWithLine")) {
           return Promise.resolve({
             id: IdMap.getId("cartWithLine"),
@@ -586,7 +587,7 @@ describe("CartService", () => {
     }
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("cartWithLine")) {
           return Promise.resolve({
             id: IdMap.getId("cartWithLine"),
@@ -672,7 +673,7 @@ describe("CartService", () => {
       },
     }
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("withShipping")) {
           return Promise.resolve({
             shipping_methods: [
@@ -815,7 +816,7 @@ describe("CartService", () => {
 
   describe("update", () => {
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === "withpays") {
           return Promise.resolve({
             payment_sessions: [
@@ -846,31 +847,24 @@ describe("CartService", () => {
       cartService.setPaymentSessions = jest.fn()
       await cartService.update("withpays", {})
 
-      expect(cartRepository.findOne).toHaveBeenCalledWith(
-        expect.objectContaining({
-          relations: {
-            billing_address: true,
-            customer: true,
-            discounts: {
-              regions: true,
-              rule: true
-            },
-            gift_cards: true,
-            items: {
-              variant: {
-                product: true
-              }
-            },
-            payment_sessions: true,
-            region: { countries: true },
-            shipping_address: true,
-            shipping_methods: true
-          },
-          select: undefined,
-          where: {
-            id: "withpays"
-          }
-        }),
+      expect(cartRepository.findOneWithRelations).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          "items",
+          "shipping_methods",
+          "shipping_address",
+          "billing_address",
+          "gift_cards",
+          "customer",
+          "region",
+          "payment_sessions",
+          "region.countries",
+          "discounts",
+          "discounts.rule",
+          "discounts.regions",
+        ]),
+        {
+          where: { id: "withpays" },
+        }
       )
     })
   })
@@ -910,7 +904,7 @@ describe("CartService", () => {
     }
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("cannot")) {
           return Promise.resolve({
             items: [
@@ -1022,7 +1016,7 @@ describe("CartService", () => {
       },
     }
     const cartRepository = MockRepository({
-      findOne: () => Promise.resolve({}),
+      findOneWithRelations: () => Promise.resolve({}),
     })
     const cartService = new CartService({
       manager: MockManager,
@@ -1094,7 +1088,7 @@ describe("CartService", () => {
 
   describe("updateBillingAddress", () => {
     const cartRepository = MockRepository({
-      findOne: () =>
+      findOneWithRelations: () =>
         Promise.resolve({
           region: { countries: [{ iso_2: "us" }] },
         }),
@@ -1156,7 +1150,7 @@ describe("CartService", () => {
 
   describe("updateShippingAddress", () => {
     const cartRepository = MockRepository({
-      findOne: () =>
+      findOneWithRelations: () =>
         Promise.resolve({
           region: { countries: [{ iso_2: "us" }] },
         }),
@@ -1237,16 +1231,6 @@ describe("CartService", () => {
     const lineItemService = {
       update: jest.fn((r) => r),
       delete: jest.fn(),
-      retrieve: jest.fn().mockImplementation((lineItemId) => {
-        if (lineItemId === IdMap.getId("existing")) {
-          return Promise.resolve({
-            id: lineItemId,
-          })
-        }
-        return Promise.resolve({
-          id: lineItemId,
-        })
-      }),
       withTransaction: function () {
         return this
       },
@@ -1272,7 +1256,7 @@ describe("CartService", () => {
       },
     }
     const cartRepository = MockRepository({
-      findOne: () =>
+      findOneWithRelations: () =>
         Promise.resolve({
           items: [
             {
@@ -1377,9 +1361,7 @@ describe("CartService", () => {
           shipping_address: {
             country_code: "us",
           },
-          items: [{
-            id: IdMap.getId("testitem")
-          }],
+          items: [IdMap.getId("testitem")],
           payment_session: null,
           payment_sessions: [],
           gift_cards: [],
@@ -1396,7 +1378,7 @@ describe("CartService", () => {
 
   describe("setPaymentSession", () => {
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("cartWithLine")) {
           return Promise.resolve({
             total: 100,
@@ -1604,7 +1586,7 @@ describe("CartService", () => {
     }
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("cart-to-filter")) {
           return Promise.resolve(cart3)
         }
@@ -1810,7 +1792,7 @@ describe("CartService", () => {
     const cartWithCustomSO = buildCart("cart-with-custom-so")
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         switch (q.where.id) {
           case IdMap.getId("lines"):
             return Promise.resolve(cart3)
@@ -2009,7 +1991,7 @@ describe("CartService", () => {
     }
 
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         if (q.where.id === IdMap.getId("with-d")) {
           return Promise.resolve({
             id: IdMap.getId("cart"),
@@ -2498,7 +2480,7 @@ describe("CartService", () => {
 
   describe("removeDiscount", () => {
     const cartRepository = MockRepository({
-      findOne: (q) => {
+      findOneWithRelations: (rels, q) => {
         return Promise.resolve({
           id: IdMap.getId("cart"),
           discounts: [

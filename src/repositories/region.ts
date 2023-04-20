@@ -1,5 +1,5 @@
-import { Region } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { Region } from "../models/region"
 
-export const RegionRepository = dataSource.getRepository(Region)
-export default RegionRepository
+@EntityRepository(Region)
+export class RegionRepository extends Repository<Region> {}

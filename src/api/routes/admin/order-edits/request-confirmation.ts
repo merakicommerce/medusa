@@ -12,7 +12,7 @@ import {
 } from "../../../../types/order-edit"
 
 /**
- * @oas [post] /admin/order-edits/{id}/request
+ * @oas [post] /order-edits/{id}/request
  * operationId: "PostOrderEditsOrderEditRequest"
  * summary: "Request Confirmation"
  * description: "Request customer confirmation of an Order Edit"
@@ -41,7 +41,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK

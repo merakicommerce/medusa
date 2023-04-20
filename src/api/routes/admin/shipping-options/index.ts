@@ -33,7 +33,7 @@ export default (app, featureFlagRouter: FlagRouter) => {
   return app
 }
 
-export const defaultFields: (keyof ShippingOption)[] = [
+export const defaultFields = [
   "id",
   "name",
   "region_id",
@@ -55,20 +55,6 @@ export const defaultRelations = ["region", "profile", "requirements"]
 /**
  * @schema AdminShippingOptionsListRes
  * type: object
- * x-expanded-relations:
- *   field: shipping_options
- *   relations:
- *     - profile
- *     - region
- *     - requirements
- *   eager:
- *     - region.fulfillment_providers
- *     - region.payment_providers
- * required:
- *   - shipping_options
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   shipping_options:
  *     type: array
@@ -77,12 +63,6 @@ export const defaultRelations = ["region", "profile", "requirements"]
  *   count:
  *     type: integer
  *     description: The total number of items available
- *   offset:
- *     type: integer
- *     description: The number of items skipped before these items
- *   limit:
- *     type: integer
- *     description: The number of items per page
  */
 export type AdminShippingOptionsListRes = PaginatedResponse & {
   shipping_options: ShippingOption[]
@@ -91,17 +71,6 @@ export type AdminShippingOptionsListRes = PaginatedResponse & {
 /**
  * @schema AdminShippingOptionsRes
  * type: object
- * x-expanded-relations:
- *   field: shipping_option
- *   relations:
- *     - profile
- *     - region
- *     - requirements
- *   eager:
- *     - region.fulfillment_providers
- *     - region.payment_providers
- * required:
- *   - shipping_option
  * properties:
  *   shipping_option:
  *     $ref: "#/components/schemas/ShippingOption"
@@ -113,10 +82,6 @@ export type AdminShippingOptionsRes = {
 /**
  * @schema AdminShippingOptionsDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string

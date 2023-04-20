@@ -1,13 +1,3 @@
-import { IInventoryService, InventoryItemDTO } from "@medusajs/types"
-import { MedusaError } from "@medusajs/utils"
-import { EntityManager } from "typeorm"
-import { ulid } from "ulid"
-import { ProductVariant } from "../../../../../models"
-import {
-  ProductVariantInventoryService,
-  ProductVariantService,
-} from "../../../../../services"
-import { CreateProductVariantInput } from "../../../../../types/product-variant"
 import {
   DistributedTransaction,
   TransactionHandlerType,
@@ -16,28 +6,39 @@ import {
   TransactionState,
   TransactionStepsDefinition,
 } from "../../../../../utils/transaction"
+import { ulid } from "ulid"
+import { EntityManager } from "typeorm"
+import { IInventoryService } from "../../../../../interfaces"
+import {
+  ProductVariantInventoryService,
+  ProductVariantService,
+} from "../../../../../services"
+import { CreateProductVariantInput } from "../../../../../types/product-variant"
+import { InventoryItemDTO } from "../../../../../types/inventory"
+import { ProductVariant } from "../../../../../models"
+import { MedusaError } from "medusa-core-utils"
 
 enum actions {
-  createVariants = "createVariants",
-  createInventoryItems = "createInventoryItems",
-  attachInventoryItems = "attachInventoryItems",
+  createVariant = "createVariant",
+  createInventoryItem = "createInventoryItem",
+  attachInventoryItem = "attachInventoryItem",
 }
 
 const simpleFlow: TransactionStepsDefinition = {
   next: {
-    action: actions.createVariants,
+    action: actions.createVariant,
   },
 }
 
 const flowWithInventory: TransactionStepsDefinition = {
   next: {
-    action: actions.createVariants,
+    action: actions.createVariant,
     saveResponse: true,
     next: {
-      action: actions.createInventoryItems,
+      action: actions.createInventoryItem,
       saveResponse: true,
       next: {
-        action: actions.attachInventoryItems,
+        action: actions.attachInventoryItem,
         noCompensation: true,
       },
     },
@@ -61,10 +62,10 @@ type InjectedDependencies = {
   inventoryService?: IInventoryService
 }
 
-export const createVariantsTransaction = async (
+export const createVariantTransaction = async (
   dependencies: InjectedDependencies,
   productId: string,
-  input: CreateProductVariantInput[]
+  input: CreateProductVariantInput
 ): Promise<DistributedTransaction> => {
   const {
     manager,
@@ -73,83 +74,58 @@ export const createVariantsTransaction = async (
     productVariantInventoryService,
   } = dependencies
 
+  const inventoryServiceTx = inventoryService?.withTransaction(manager)
+
   const productVariantInventoryServiceTx =
     productVariantInventoryService.withTransaction(manager)
 
   const productVariantServiceTx = productVariantService.withTransaction(manager)
 
-  async function createVariants(variantInput: CreateProductVariantInput[]) {
+  async function createVariant(variantInput: CreateProductVariantInput) {
     return await productVariantServiceTx.create(productId, variantInput)
   }
 
-  async function removeVariants(variants: ProductVariant[]) {
-    if (variants.length) {
-      await productVariantServiceTx.delete(variants.map((v) => v.id))
+  async function removeVariant(variant: ProductVariant) {
+    if (variant) {
+      await productVariantServiceTx.delete(variant.id)
     }
   }
 
-  async function createInventoryItems(variants: ProductVariant[] = []) {
-    const context = { transactionManager: manager }
+  async function createInventoryItem(variant: ProductVariant) {
+    if (!variant.manage_inventory) {
+      return
+    }
 
-    return await Promise.all(
-      variants.map(async (variant) => {
-        if (!variant.manage_inventory) {
-          return
-        }
-
-        const inventoryItem = await inventoryService!.createInventoryItem(
-          {
-            sku: variant.sku,
-            origin_country: variant.origin_country,
-            hs_code: variant.hs_code,
-            mid_code: variant.mid_code,
-            material: variant.material,
-            weight: variant.weight,
-            length: variant.length,
-            height: variant.height,
-            width: variant.width,
-          },
-          context
-        )
-
-        return { variant, inventoryItem }
-      })
-    )
+    return await inventoryServiceTx!.createInventoryItem({
+      sku: variant.sku,
+      origin_country: variant.origin_country,
+      hs_code: variant.hs_code,
+      mid_code: variant.mid_code,
+      material: variant.material,
+      weight: variant.weight,
+      length: variant.length,
+      height: variant.height,
+      width: variant.width,
+    })
   }
 
-  async function removeInventoryItems(
-    data: {
-      variant: ProductVariant
-      inventoryItem: InventoryItemDTO
-    }[] = []
-  ) {
-    const context = { transactionManager: manager }
-
-    return await Promise.all(
-      data.map(async ({ inventoryItem }) => {
-        return await inventoryService!.deleteInventoryItem(
-          inventoryItem.id,
-          context
-        )
-      })
-    )
+  async function removeInventoryItem(inventoryItem: InventoryItemDTO) {
+    if (inventoryItem) {
+      await inventoryServiceTx!.deleteInventoryItem(inventoryItem.id)
+    }
   }
 
-  async function attachInventoryItems(
-    data: {
-      variant: ProductVariant
-      inventoryItem: InventoryItemDTO
-    }[]
+  async function attachInventoryItem(
+    variant: ProductVariant,
+    inventoryItem: InventoryItemDTO
   ) {
-    return await Promise.all(
-      data
-        .filter((d) => d)
-        .map(async ({ variant, inventoryItem }) => {
-          return productVariantInventoryServiceTx.attachInventoryItem(
-            variant.id,
-            inventoryItem.id
-          )
-        })
+    if (!variant.manage_inventory) {
+      return
+    }
+
+    await productVariantInventoryServiceTx.attachInventoryItem(
+      variant.id,
+      inventoryItem.id
     )
   }
 
@@ -159,49 +135,46 @@ export const createVariantsTransaction = async (
     payload: TransactionPayload
   ) {
     const command = {
-      [actions.createVariants]: {
+      [actions.createVariant]: {
         [TransactionHandlerType.INVOKE]: async (
-          data: CreateProductVariantInput[]
+          data: CreateProductVariantInput
         ) => {
-          return await createVariants(data)
+          return await createVariant(data)
         },
         [TransactionHandlerType.COMPENSATE]: async (
-          data: CreateProductVariantInput[],
+          data: CreateProductVariantInput,
           { invoke }
         ) => {
-          await removeVariants(invoke[actions.createVariants])
+          await removeVariant(invoke[actions.createVariant])
         },
       },
-      [actions.createInventoryItems]: {
+      [actions.createInventoryItem]: {
         [TransactionHandlerType.INVOKE]: async (
-          data: CreateProductVariantInput[],
+          data: CreateProductVariantInput,
           { invoke }
         ) => {
-          const { [actions.createVariants]: variants } = invoke
+          const { [actions.createVariant]: variant } = invoke
 
-          return await createInventoryItems(variants)
+          return await createInventoryItem(variant)
         },
         [TransactionHandlerType.COMPENSATE]: async (
-          data: {
-            variant: ProductVariant
-            inventoryItem: InventoryItemDTO
-          }[],
+          data: CreateProductVariantInput,
           { invoke }
         ) => {
-          await removeInventoryItems(invoke[actions.createInventoryItems])
+          await removeInventoryItem(invoke[actions.createInventoryItem])
         },
       },
-      [actions.attachInventoryItems]: {
+      [actions.attachInventoryItem]: {
         [TransactionHandlerType.INVOKE]: async (
-          data: CreateProductVariantInput[],
+          data: CreateProductVariantInput,
           { invoke }
         ) => {
           const {
-            [actions.createVariants]: variants,
-            [actions.createInventoryItems]: inventoryItemsResult,
+            [actions.createVariant]: variant,
+            [actions.createInventoryItem]: inventoryItem,
           } = invoke
 
-          return await attachInventoryItems(inventoryItemsResult)
+          return await attachInventoryItem(variant, inventoryItem)
         },
       },
     }

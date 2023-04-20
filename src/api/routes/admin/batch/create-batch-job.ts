@@ -6,7 +6,7 @@ import { EntityManager } from "typeorm"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/batch-jobs
+ * @oas [post] /batch-jobs
  * operationId: "PostBatchJobs"
  * summary: "Create a Batch Job"
  * description: "Creates a Batch Job."
@@ -46,7 +46,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Batch Jobs
+ *   - Batch Job
  * responses:
  *   201:
  *     description: OK

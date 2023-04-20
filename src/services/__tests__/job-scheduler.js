@@ -1,9 +1,12 @@
-import { Queue } from "bullmq"
+import Bull from "bull"
+import config from "../../loaders/config"
 import JobSchedulerService from "../job-scheduler"
 
-jest.genMockFromModule("bullmq")
-jest.mock("bullmq")
-jest.mock("ioredis")
+jest.genMockFromModule("bull")
+jest.mock("bull")
+jest.mock("../../loaders/config")
+
+config.redisURI = "testhost"
 
 const loggerMock = {
   info: jest.fn().mockReturnValue(console.log),
@@ -12,112 +15,90 @@ const loggerMock = {
 }
 
 describe("JobSchedulerService", () => {
-  let scheduler
-
   describe("constructor", () => {
+    let jobScheduler
     beforeAll(() => {
-      jest.clearAllMocks()
+      jest.resetAllMocks()
 
-      scheduler = new JobSchedulerService(
-        {
-          logger: loggerMock,
-        },
-        {
-          projectConfig: {
-            redis_url: "testhost",
-          },
-        }
-      )
+      jobScheduler = new JobSchedulerService({
+        logger: loggerMock,
+      })
     })
 
     it("creates bull queue", () => {
-      expect(Queue).toHaveBeenCalledTimes(1)
-      expect(Queue).toHaveBeenCalledWith("scheduled-jobs:queue", {
-        connection: expect.any(Object),
-        prefix: "JobSchedulerService",
+      expect(Bull).toHaveBeenCalledTimes(1)
+      expect(Bull).toHaveBeenCalledWith("scheduled-jobs:queue", {
+        createClient: expect.any(Function),
       })
     })
   })
 
   describe("create", () => {
     let jobScheduler
+    describe("successfully creates scheduled job and add handler", () => {
+      beforeAll(() => {
+        jest.resetAllMocks()
 
-    beforeAll(async () => {
-      jest.resetAllMocks()
-
-      jobScheduler = new JobSchedulerService(
-        {
+        jobScheduler = new JobSchedulerService({
           logger: loggerMock,
-        },
-        {
-          projectConfig: {
-            redis_url: "testhost",
+        })
+
+        jobScheduler.create(
+          "eventName",
+          { data: "test" },
+          "* * * * *",
+          () => "test"
+        )
+      })
+
+      it("added the handler to the job queue", () => {
+        expect(jobScheduler.handlers_.get("eventName").length).toEqual(1)
+        expect(jobScheduler.queue_.add).toHaveBeenCalledWith(
+          {
+            eventName: "eventName",
+            data: { data: "test" },
           },
-        }
-      )
-
-      await jobScheduler.create(
-        "eventName",
-        { data: "test" },
-        "* * * * *",
-        () => "test"
-      )
-    })
-
-    it("added the handler to the job queue", () => {
-      expect(jobScheduler.handlers_.get("eventName").length).toEqual(1)
-      expect(jobScheduler.queue_.add).toHaveBeenCalledWith(
-        "eventName",
-        {
-          eventName: "eventName",
-          data: { data: "test" },
-        },
-        {
-          repeat: { pattern: "* * * * *" },
-        }
-      )
-    })
-  })
-
-  describe("scheduledJobWorker", () => {
-    let jobScheduler
-    let result
-
-    beforeAll(async () => {
-      jest.resetAllMocks()
-
-      jobScheduler = new JobSchedulerService(
-        {
-          logger: loggerMock,
-        },
-        {
-          projectConfig: {
-            redis_url: "testhost",
-          },
-        }
-      )
-
-      await jobScheduler.create(
-        "eventName",
-        { data: "test" },
-        "* * * * *",
-        () => Promise.resolve("hi")
-      )
-
-      result = await jobScheduler.scheduledJobsWorker({
-        data: { eventName: "eventName", data: {} },
+          {
+            repeat: { cron: "* * * * *" },
+          }
+        )
       })
     })
 
-    it("calls logger", () => {
-      expect(loggerMock.info).toHaveBeenCalled()
-      expect(loggerMock.info).toHaveBeenCalledWith(
-        "Processing scheduled job: eventName"
-      )
-    })
+    describe("scheduledJobWorker", () => {
+      let jobScheduler
+      let result
+      describe("successfully runs the worker", () => {
+        beforeAll(async () => {
+          jest.resetAllMocks()
 
-    it("returns array with hi", async () => {
-      expect(result).toEqual(["hi"])
+          jobScheduler = new JobSchedulerService(
+            {
+              logger: loggerMock,
+            },
+            {}
+          )
+
+          jobScheduler.create("eventName", { data: "test" }, "* * * * *", () =>
+            Promise.resolve("hi")
+          )
+
+          result = await jobScheduler.scheduledJobsWorker({
+            data: { eventName: "eventName", data: {} },
+          })
+        })
+
+        it("calls logger", () => {
+          expect(loggerMock.info).toHaveBeenCalled()
+          expect(loggerMock.info).toHaveBeenCalledWith(
+            "Processing scheduled job: eventName"
+          )
+        })
+
+        it("returns array with hi", async () => {
+          expect(result).toEqual(["hi"])
+        })
+      })
     })
   })
 })

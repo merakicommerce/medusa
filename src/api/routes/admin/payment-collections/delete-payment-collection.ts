@@ -1,7 +1,7 @@
 import { PaymentCollectionService } from "../../../../services"
 
 /**
- * @oas [delete] /admin/payment-collections/{id}
+ * @oas [delete] /payment-collections/{id}
  * operationId: "DeletePaymentCollectionsPaymentCollection"
  * summary: "Del a PaymentCollection"
  * description: "Deletes a Payment Collection"
@@ -30,7 +30,7 @@ import { PaymentCollectionService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Payment Collections
+ *   - PaymentCollection
  * responses:
  *   200:
  *     description: OK

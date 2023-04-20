@@ -1,26 +1,30 @@
-import { Router } from "express"
+import { RequestHandler, Router } from "express"
 import "reflect-metadata"
 
 import { Product } from "../../../.."
-import { PaginatedResponse } from "../../../../types/common"
-import { FlagRouter } from "../../../../utils/flag-router"
 import middlewares, { transformStoreQuery } from "../../../middlewares"
+import { FlagRouter } from "../../../../utils/flag-router"
+import { PaginatedResponse } from "../../../../types/common"
 import { extendRequestParams } from "../../../middlewares/publishable-api-key/extend-request-params"
+import PublishableAPIKeysFeatureFlag from "../../../../loaders/feature-flags/publishable-api-keys"
 import { validateProductSalesChannelAssociation } from "../../../middlewares/publishable-api-key/validate-product-sales-channel-association"
 import { validateSalesChannelParam } from "../../../middlewares/publishable-api-key/validate-sales-channel-param"
-import { StoreGetProductsProductParams } from "./get-product"
 import { StoreGetProductsParams } from "./list-products"
+import { StoreGetProductsProductParams } from "./get-product"
 
 const route = Router()
 
 export default (app, featureFlagRouter: FlagRouter) => {
-  if (featureFlagRouter.isFeatureEnabled("product_categories")) {
-    allowedStoreProductsRelations.push("categories")
+  app.use("/products", route)
+
+  if (featureFlagRouter.isFeatureEnabled(PublishableAPIKeysFeatureFlag.key)) {
+    route.use(
+      "/",
+      extendRequestParams as unknown as RequestHandler,
+      validateSalesChannelParam as unknown as RequestHandler
+    )
+    route.use("/:id", validateProductSalesChannelAssociation)
   }
-
-  app.use("/products", extendRequestParams, validateSalesChannelParam, route)
-
-  route.use("/:id", validateProductSalesChannelAssociation)
 
   route.get(
     "/",
@@ -101,7 +105,6 @@ export const allowedStoreProductsRelations = [
   ...defaultStoreProductsRelations,
   "variants.title",
   "variants.prices.amount",
-  "sales_channels",
 ]
 
 export * from "./list-products"
@@ -110,20 +113,6 @@ export * from "./search"
 /**
  * @schema StoreProductsRes
  * type: object
- * x-expanded-relations:
- *   field: product
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - options.values
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - product
  * properties:
  *   product:
  *     $ref: "#/components/schemas/PricedProduct"
@@ -134,40 +123,20 @@ export type StoreProductsRes = {
 
 /**
  * @schema StorePostSearchRes
- * allOf:
- *   - type: object
- *     required:
- *       - hits
- *     properties:
- *       hits:
- *         description: Array of results. The format of the items depends on the search engine installed on the server.
- *         type: array
- *   - type: object
+ * type: object
+ * properties:
+ *   hits:
+ *     type: array
+ *     description: Array of results. The format of the items depends on the search engine installed on the server.
  */
 export type StorePostSearchRes = {
   hits: unknown[]
-} & Record<string, unknown>
+  [k: string]: unknown
+}
 
 /**
  * @schema StoreProductsListRes
  * type: object
- * x-expanded-relations:
- *   field: products
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - options.values
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - products
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   products:
  *     type: array

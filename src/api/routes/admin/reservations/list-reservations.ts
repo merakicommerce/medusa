@@ -1,14 +1,14 @@
-import { IInventoryService } from "@medusajs/types"
 import { Type } from "class-transformer"
 import { IsArray, IsOptional, IsString, ValidateNested } from "class-validator"
 import { Request, Response } from "express"
+import { IInventoryService } from "../../../../interfaces"
 import {
   extendedFindParamsMixin,
   NumericalComparisonOperator,
 } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/reservations
+ * @oas [get] /reservations
  * operationId: "GetReservations"
  * summary: "List Reservations"
  * description: "Retrieve a list of Reservations."
@@ -63,20 +63,7 @@ import {
  *   - (query) limit=20 {integer} Limit the number of Reservations returned.
  *   - (query) expand {string} (Comma separated) Which fields should be expanded in the product category.
  *   - (query) fields {string} (Comma separated) Which fields should be included in the product category.
- * x-codegen:
- *   method: list
- *   queryParams: AdminGetReservationsParams
  * x-codeSamples:
- *   - lang: JavaScript
- *     label: JS Client
- *     source: |
- *       import Medusa from "@medusajs/medusa-js"
- *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
- *       // must be previously logged in or use api token
- *       medusa.admin.reservations.list()
- *       .then(({ reservations, count, limit, offset }) => {
- *         console.log(reservations.length)
- *       })
  *   - lang: Shell
  *     label: cURL
  *     source: |
@@ -86,14 +73,14 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Reservations
+ *   - Product Category
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminReservationsListRes"
+ *           $ref: "#/components/schemas/AdminGetReservationReservationsReq"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":

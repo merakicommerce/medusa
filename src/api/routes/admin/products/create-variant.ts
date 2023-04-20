@@ -1,5 +1,3 @@
-import { IInventoryService } from "@medusajs/types"
-import { Type } from "class-transformer"
 import {
   IsArray,
   IsBoolean,
@@ -9,23 +7,27 @@ import {
   IsString,
   ValidateNested,
 } from "class-validator"
-import { EntityManager } from "typeorm"
-import { defaultAdminProductFields, defaultAdminProductRelations } from "."
+import { Type } from "class-transformer"
 import {
-  PricingService,
   ProductService,
-  ProductVariantInventoryService,
   ProductVariantService,
+  ProductVariantInventoryService,
 } from "../../../../services"
+import { defaultAdminProductFields, defaultAdminProductRelations } from "."
+
+import { IInventoryService } from "../../../../interfaces"
 import {
   CreateProductVariantInput,
   ProductVariantPricesCreateReq,
 } from "../../../../types/product-variant"
 import { validator } from "../../../../utils/validator"
-import { createVariantsTransaction } from "./transaction/create-product-variant"
+
+import { EntityManager } from "typeorm"
+
+import { createVariantTransaction } from "./transaction/create-product-variant"
 
 /**
- * @oas [post] /admin/products/{id}/variants
+ * @oas [post] /products/{id}/variants
  * operationId: "PostProductsProductVariants"
  * summary: "Create a Product Variant"
  * description: "Creates a Product Variant. Each Product Variant must have a unique combination of Product Option Values."
@@ -90,7 +92,7 @@ import { createVariantsTransaction } from "./transaction/create-product-variant"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -131,7 +133,7 @@ export default async (req, res) => {
   const manager: EntityManager = req.scope.resolve("manager")
 
   await manager.transaction(async (transactionManager) => {
-    await createVariantsTransaction(
+    await createVariantTransaction(
       {
         manager: transactionManager,
         inventoryService,
@@ -139,19 +141,15 @@ export default async (req, res) => {
         productVariantService,
       },
       id,
-      [validated as CreateProductVariantInput]
+      validated as CreateProductVariantInput
     )
   })
 
   const productService: ProductService = req.scope.resolve("productService")
-  const pricingService: PricingService = req.scope.resolve("pricingService")
-
-  const rawProduct = await productService.retrieve(id, {
+  const product = await productService.retrieve(id, {
     select: defaultAdminProductFields,
     relations: defaultAdminProductRelations,
   })
-
-  const [product] = await pricingService.setProductPrices([rawProduct])
 
   res.json({ product })
 }

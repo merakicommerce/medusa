@@ -1,16 +1,15 @@
 import jwt, { JwtPayload } from "jsonwebtoken"
 import { MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
-import { UserService } from "."
+import { EventBusService, UserService } from "."
 import { User } from ".."
-import { TransactionBaseService } from "../interfaces"
 import { UserRoles } from "../models/user"
 import { InviteRepository } from "../repositories/invite"
 import { UserRepository } from "../repositories/user"
-import { ConfigModule } from "../types/global"
 import { ListInvite } from "../types/invites"
+import { ConfigModule } from "../types/global"
+import { TransactionBaseService } from "../interfaces"
 import { buildQuery } from "../utils"
-import EventBusService from "./event-bus"
 
 // 7 days
 const DEFAULT_VALID_DURATION = 1000 * 60 * 60 * 24 * 7
@@ -28,6 +27,9 @@ class InviteService extends TransactionBaseService {
     CREATED: "invite.created",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly userService_: UserService
   protected readonly userRepo_: typeof UserRepository
   protected readonly inviteRepository_: typeof InviteRepository
@@ -37,6 +39,7 @@ class InviteService extends TransactionBaseService {
 
   constructor(
     {
+      manager,
       userService,
       userRepository,
       inviteRepository,
@@ -45,13 +48,23 @@ class InviteService extends TransactionBaseService {
     configModule: ConfigModule
   ) {
     // @ts-ignore
-    // eslint-disable-next-line prefer-rest-params
     super(...arguments)
 
     this.configModule_ = configModule
+
+    /** @private @constant {EntityManager} */
+    this.manager_ = manager
+
+    /** @private @constant {UserService} */
     this.userService_ = userService
+
+    /** @private @constant {UserRepository} */
     this.userRepo_ = userRepository
+
+    /** @private @constant {InviteRepository} */
     this.inviteRepository_ = inviteRepository
+
+    /** @private @const {EventBus} */
     this.eventBus_ = eventBusService
   }
 
@@ -67,7 +80,7 @@ class InviteService extends TransactionBaseService {
   }
 
   async list(selector, config = {}): Promise<ListInvite[]> {
-    const inviteRepo = this.activeManager_.withRepository(InviteRepository)
+    const inviteRepo = this.manager_.getCustomRepository(InviteRepository)
 
     const query = buildQuery(selector, config)
 
@@ -88,9 +101,9 @@ class InviteService extends TransactionBaseService {
   ): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
       const inviteRepository =
-        this.activeManager_.withRepository(InviteRepository)
+        this.manager_.getCustomRepository(InviteRepository)
 
-      const userRepo = this.activeManager_.withRepository(UserRepository)
+      const userRepo = this.manager_.getCustomRepository(UserRepository)
 
       const userEntity = await userRepo.findOne({
         where: { email: user },
@@ -154,8 +167,8 @@ class InviteService extends TransactionBaseService {
    */
   async delete(inviteId): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const inviteRepo: typeof InviteRepository =
-        manager.withRepository(InviteRepository)
+      const inviteRepo: InviteRepository =
+        manager.getCustomRepository(InviteRepository)
 
       // Should not fail, if invite does not exist, since delete is idempotent
       const invite = await inviteRepo.findOne({ where: { id: inviteId } })
@@ -182,8 +195,8 @@ class InviteService extends TransactionBaseService {
     const { invite_id, user_email } = decoded
 
     return await this.atomicPhase_(async (m) => {
-      const userRepo = m.withRepository(this.userRepo_)
-      const inviteRepo: typeof InviteRepository = m.withRepository(
+      const userRepo = m.getCustomRepository(this.userRepo_)
+      const inviteRepo: InviteRepository = m.getCustomRepository(
         this.inviteRepository_
       )
 
@@ -238,9 +251,9 @@ class InviteService extends TransactionBaseService {
   }
 
   async resend(id): Promise<void> {
-    const inviteRepo = this.activeManager_.withRepository(InviteRepository)
+    const inviteRepo = this.manager_.getCustomRepository(InviteRepository)
 
-    const invite = await inviteRepo.findOne({ where: { id } })
+    const invite = await inviteRepo.findOne({ id })
 
     if (!invite) {
       throw new MedusaError(
@@ -261,7 +274,7 @@ class InviteService extends TransactionBaseService {
     await inviteRepo.save(invite)
 
     await this.eventBus_
-      .withTransaction(this.activeManager_)
+      .withTransaction(this.manager_)
       .emit(InviteService.Events.CREATED, {
         id: invite.id,
         token: invite.token,

@@ -1,6 +1,6 @@
-import { OrderItemChange } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
 
-export const OrderItemChangeRepository =
-  dataSource.getRepository(OrderItemChange)
-export default OrderItemChangeRepository
+import { OrderItemChange } from "../models/order-item-change"
+
+@EntityRepository(OrderItemChange)
+export class OrderItemChangeRepository extends Repository<OrderItemChange> {}

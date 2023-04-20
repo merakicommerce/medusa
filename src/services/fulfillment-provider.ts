@@ -37,6 +37,9 @@ type CalculateOptionPriceInput = {
  * Helps retrive fulfillment providers
  */
 class FulfillmentProviderService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly container_: FulfillmentProviderContainer
   // eslint-disable-next-line max-len
   protected readonly fulfillmentProviderRepository_: typeof FulfillmentProviderRepository
@@ -44,15 +47,16 @@ class FulfillmentProviderService extends TransactionBaseService {
   constructor(container: FulfillmentProviderContainer) {
     super(container)
 
-    const { fulfillmentProviderRepository } = container
+    const { manager, fulfillmentProviderRepository } = container
 
     this.container_ = container
+    this.manager_ = manager
     this.fulfillmentProviderRepository_ = fulfillmentProviderRepository
   }
 
   async registerInstalledProviders(providers: string[]): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const fulfillmentProviderRepo = manager.withRepository(
+      const fulfillmentProviderRepo = manager.getCustomRepository(
         this.fulfillmentProviderRepository_
       )
       await fulfillmentProviderRepo.update({}, { is_installed: false })
@@ -65,7 +69,7 @@ class FulfillmentProviderService extends TransactionBaseService {
   }
 
   async list(): Promise<FulfillmentProvider[]> {
-    const fpRepo = this.activeManager_.withRepository(
+    const fpRepo = this.manager_.getCustomRepository(
       this.fulfillmentProviderRepository_
     )
 

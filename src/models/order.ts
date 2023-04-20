@@ -11,8 +11,15 @@ import {
   OneToMany,
   OneToOne,
 } from "typeorm"
-import { DbAwareColumn, resolveDbGenerationStrategy, resolveDbType, } from "../utils/db-aware-column"
-import { FeatureFlagColumn, FeatureFlagDecorators, } from "../utils/feature-flag-decorators"
+import {
+  DbAwareColumn,
+  resolveDbGenerationStrategy,
+  resolveDbType,
+} from "../utils/db-aware-column"
+import {
+  FeatureFlagColumn,
+  FeatureFlagDecorators,
+} from "../utils/feature-flag-decorators"
 
 import { BaseEntity } from "../interfaces/models/base-entity"
 import { generateEntityId } from "../utils/generate-entity-id"
@@ -487,7 +494,7 @@ export class Order extends BaseEntity {
  *     nullable: true
  *     type: string
  *     externalDocs:
- *       url: https://docs.medusajs.com/modules/carts-and-checkout/cart.md#idempotency-key
+ *       url: https://docs.medusajs.com/advanced/backend/payment/overview#idempotency-key
  *       description: Learn more how to use the idempotency key.
  *   external_id:
  *     description: The ID of an external order.

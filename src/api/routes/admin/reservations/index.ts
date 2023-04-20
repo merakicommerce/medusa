@@ -1,14 +1,15 @@
-import { ReservationItemDTO } from "@medusajs/types"
 import { Router } from "express"
+import { Note, ReservationItemDTO } from "../../../.."
 import { DeleteResponse, PaginatedResponse } from "../../../../types/common"
 import middlewares, {
   transformBody,
   transformQuery,
 } from "../../../middlewares"
-import { checkRegisteredModules } from "../../../middlewares/check-registered-modules"
+import "reflect-metadata"
 import { AdminPostReservationsReq } from "./create-reservation"
-import { AdminGetReservationsParams } from "./list-reservations"
 import { AdminPostReservationsReservationReq } from "./update-reservation"
+import { checkRegisteredModules } from "../../../middlewares/check-registered-modules"
+import { AdminGetReservationsParams } from "./list-reservations"
 
 const route = Router()
 
@@ -55,7 +56,7 @@ export default (app) => {
 }
 
 /**
- * @schema AdminReservationsRes
+ * @schema AdminPostReservationsReq
  * type: object
  * required:
  *   - reservation
@@ -68,13 +69,8 @@ export type AdminReservationsRes = {
 }
 
 /**
- * @schema AdminReservationsListRes
+ * @schema AdminGetReservationReservationsReq
  * type: object
- * required:
- *   - reservations
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   reservations:
  *     type: array
@@ -107,30 +103,9 @@ export const defaultReservationFields = [
   "updated_at",
 ]
 
-/**
- * @schema AdminReservationsDeleteRes
- * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
- * properties:
- *   id:
- *     type: string
- *     description: The ID of the deleted Reservation.
- *   object:
- *     type: string
- *     description: The type of the object that was deleted.
- *     default: reservation
- *   deleted:
- *     type: boolean
- *     description: Whether or not the Reservation was deleted.
- *     default: true
- */
 export type AdminReservationsDeleteRes = DeleteResponse
 
 export * from "./create-reservation"
 export * from "./delete-reservation"
 export * from "./get-reservation"
-export * from "./list-reservations"
 export * from "./update-reservation"

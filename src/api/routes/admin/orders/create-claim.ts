@@ -19,7 +19,7 @@ import { AddressPayload, FindParams } from "../../../../types/common"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [post] /admin/orders/{id}/claims
+ * @oas [post] /order/{id}/claims
  * operationId: "PostOrdersOrderClaims"
  * summary: "Create a Claim"
  * description: "Creates a Claim."
@@ -74,7 +74,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Orders
+ *   - Claim
  * responses:
  *   200:
  *     description: OK
@@ -393,8 +393,9 @@ export default async (req, res) => {
  *             description: An optional set of key-value pairs to hold additional information.
  *             type: object
  *   shipping_address:
+ *      type: object
  *      description: "An optional shipping address to send the claim to. Defaults to the parent order's shipping address"
- *      $ref: "#/components/schemas/AddressPayload"
+ *      $ref: "#/components/schemas/Address"
  *   refund_amount:
  *      description: The amount to refund the Customer when the Claim type is `refund`.
  *      type: integer
@@ -446,10 +447,6 @@ export class AdminPostOrdersOrderClaimsReq {
   @IsBoolean()
   @IsOptional()
   no_notification?: boolean
-
-  @IsOptional()
-  @IsString()
-  return_location_id?: string
 
   @IsObject()
   @IsOptional()

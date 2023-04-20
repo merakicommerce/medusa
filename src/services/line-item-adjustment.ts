@@ -30,16 +30,21 @@ type GeneratedAdjustment = {
  * Provides layer to manipulate line item adjustments.
  */
 class LineItemAdjustmentService extends TransactionBaseService {
+  protected readonly manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   private readonly lineItemAdjustmentRepo_: typeof LineItemAdjustmentRepository
   private readonly discountService: DiscountService
 
   constructor({
+    manager,
     lineItemAdjustmentRepository,
     discountService,
   }: LineItemAdjustmentServiceProps) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.lineItemAdjustmentRepo_ = lineItemAdjustmentRepository
     this.discountService = discountService
   }
@@ -61,9 +66,8 @@ class LineItemAdjustmentService extends TransactionBaseService {
       )
     }
 
-    const lineItemAdjustmentRepo = this.activeManager_.withRepository(
-      this.lineItemAdjustmentRepo_
-    )
+    const lineItemAdjustmentRepo: LineItemAdjustmentRepository =
+      this.manager_.getCustomRepository(this.lineItemAdjustmentRepo_)
 
     const query = buildQuery({ id: lineItemAdjustmentId }, config)
     const lineItemAdjustment = await lineItemAdjustmentRepo.findOne(query)
@@ -85,9 +89,8 @@ class LineItemAdjustmentService extends TransactionBaseService {
    */
   async create(data: Partial<LineItemAdjustment>): Promise<LineItemAdjustment> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const lineItemAdjustmentRepo = manager.withRepository(
-        this.lineItemAdjustmentRepo_
-      )
+      const lineItemAdjustmentRepo: LineItemAdjustmentRepository =
+        manager.getCustomRepository(this.lineItemAdjustmentRepo_)
 
       const lineItemAdjustment = lineItemAdjustmentRepo.create(data)
 
@@ -106,9 +109,8 @@ class LineItemAdjustmentService extends TransactionBaseService {
     data: Partial<LineItemAdjustment>
   ): Promise<LineItemAdjustment> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const lineItemAdjustmentRepo = manager.withRepository(
-        this.lineItemAdjustmentRepo_
-      )
+      const lineItemAdjustmentRepo: LineItemAdjustmentRepository =
+        manager.getCustomRepository(this.lineItemAdjustmentRepo_)
 
       const lineItemAdjustment = await this.retrieve(id)
 
@@ -137,7 +139,7 @@ class LineItemAdjustmentService extends TransactionBaseService {
     selector: FilterableLineItemAdjustmentProps = {},
     config: FindConfig<LineItemAdjustment> = { skip: 0, take: 20 }
   ): Promise<LineItemAdjustment[]> {
-    const lineItemAdjustmentRepo = this.activeManager_.withRepository(
+    const lineItemAdjustmentRepo = this.manager_.getCustomRepository(
       this.lineItemAdjustmentRepo_
     )
 
@@ -159,9 +161,8 @@ class LineItemAdjustmentService extends TransactionBaseService {
         })
   ): Promise<void> {
     return this.atomicPhase_(async (manager) => {
-      const lineItemAdjustmentRepo = manager.withRepository(
-        this.lineItemAdjustmentRepo_
-      )
+      const lineItemAdjustmentRepo: LineItemAdjustmentRepository =
+        manager.getCustomRepository(this.lineItemAdjustmentRepo_)
 
       if (typeof selectorOrIds === "string" || Array.isArray(selectorOrIds)) {
         const ids =

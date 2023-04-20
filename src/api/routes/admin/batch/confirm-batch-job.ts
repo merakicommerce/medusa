@@ -2,7 +2,7 @@ import { BatchJobService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/batch-jobs/{id}/confirm
+ * @oas [post] /batch-jobs/{id}/confirm
  * operationId: "PostBatchJobsBatchJobConfirmProcessing"
  * summary: "Confirm a Batch Job"
  * description: "Confirms that a previously requested batch job should be executed."
@@ -31,7 +31,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Batch Jobs
+ *   - Batch Job
  * responses:
  *  "200":
  *    description: OK

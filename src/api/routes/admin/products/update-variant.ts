@@ -21,7 +21,7 @@ import { ProductVariantPricesUpdateReq } from "../../../../types/product-variant
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/products/{id}/variants/{variant_id}
+ * @oas [post] /products/{id}/variants/{variant_id}
  * operationId: "PostProductsProductVariantsVariant"
  * summary: "Update a Product Variant"
  * description: "Update a Product Variant."
@@ -81,7 +81,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -150,6 +150,8 @@ class ProductVariantOptionReq {
 /**
  * @schema AdminPostProductsProductVariantsVariantReq
  * type: object
+ * required:
+ *   - prices
  * properties:
  *   title:
  *     description: The title to identify the Product Variant by.

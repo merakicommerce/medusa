@@ -4,10 +4,9 @@ import { EntityManager } from "typeorm"
 import AuthService from "../../../../services/auth"
 import CustomerService from "../../../../services/customer"
 import { validator } from "../../../../utils/validator"
-import { defaultRelations } from "."
 
 /**
- * @oas [post] /store/auth
+ * @oas [post] /auth
  * operationId: "PostAuth"
  * summary: "Customer Login"
  * description: "Logs a Customer in and authorizes them to view their details. Successful authentication will set a session cookie in the Customer's browser."
@@ -92,7 +91,7 @@ export default async (req, res) => {
 
   const customerService: CustomerService = req.scope.resolve("customerService")
   const customer = await customerService.retrieve(result.customer?.id || "", {
-    relations: defaultRelations,
+    relations: ["orders", "orders.items"],
   })
 
   res.json({ customer })

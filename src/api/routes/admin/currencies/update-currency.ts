@@ -7,7 +7,7 @@ import TaxInclusivePricingFeatureFlag from "../../../../loaders/feature-flags/ta
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/currencies/{code}
+ * @oas [post] /currencies/{code}
  * operationId: "PostCurrenciesCurrency"
  * summary: "Update a Currency"
  * description: "Update a Currency"
@@ -32,7 +32,7 @@ import { EntityManager } from "typeorm"
  *         includes_tax: true
  *       })
  *       .then(({ currency }) => {
- *         console.log(currency.code);
+ *         console.log(currency.id);
  *       });
  *   - lang: Shell
  *     label: cURL
@@ -44,7 +44,7 @@ import { EntityManager } from "typeorm"
  *           "includes_tax": true
  *       }'
  * tags:
- *   - Currencies
+ *   - Currency
  * responses:
  *   200:
  *     description: OK
@@ -59,11 +59,13 @@ export default async (req: ExtendedRequest<Currency>, res) => {
   const currencyService: CurrencyService = req.scope.resolve("currencyService")
   const manager: EntityManager = req.scope.resolve("manager")
 
-  const currency = await manager.transaction(async (transactionManager) => {
-    return await currencyService
-      .withTransaction(transactionManager)
-      .update(code, data)
-  })
+  const currency = await manager.transaction(
+    async (transactionManager) => {
+      return await currencyService
+        .withTransaction(transactionManager)
+        .update(code, data)
+    }
+  )
 
   res.json({ currency })
 }

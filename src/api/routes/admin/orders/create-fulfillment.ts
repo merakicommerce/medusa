@@ -21,7 +21,7 @@ import { FindParams } from "../../../../types/common"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [post] /admin/orders/{id}/fulfillment
+ * @oas [post] /orders/{id}/fulfillment
  * operationId: "PostOrdersOrderFulfillments"
  * summary: "Create a Fulfillment"
  * description: "Creates a Fulfillment of an Order - will notify Fulfillment Providers to prepare a shipment."
@@ -74,7 +74,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Orders
+ *   - Fulfillment
  * responses:
  *   200:
  *     description: OK
@@ -98,50 +98,39 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
 export default async (req, res) => {
   const { id } = req.params
 
-  const { validatedBody } = req as {
-    validatedBody: AdminPostOrdersOrderFulfillmentsReq
-  }
+  const validated = req.validatedBody
 
   const orderService: OrderService = req.scope.resolve("orderService")
   const pvInventoryService: ProductVariantInventoryService = req.scope.resolve(
     "productVariantInventoryService"
   )
-
   const manager: EntityManager = req.scope.resolve("manager")
   await manager.transaction(async (transactionManager) => {
-    const orderServiceTx = orderService.withTransaction(transactionManager)
-
-    const { fulfillments: existingFulfillments } =
-      await orderServiceTx.retrieve(id, {
+    const { fulfillments: existingFulfillments } = await orderService
+      .withTransaction(transactionManager)
+      .retrieve(id, {
         relations: ["fulfillments"],
       })
-    const existingFulfillmentSet = new Set(
-      existingFulfillments.map((fulfillment) => fulfillment.id)
+    const existingFulfillmentMap = new Map(
+      existingFulfillments.map((fulfillment) => [fulfillment.id, fulfillment])
     )
 
-    await orderServiceTx.createFulfillment(id, validatedBody.items, {
-      metadata: validatedBody.metadata,
-      no_notification: validatedBody.no_notification,
-      location_id: validatedBody.location_id,
-    })
-
-    if (validatedBody.location_id) {
-      const { fulfillments } = await orderServiceTx.retrieve(id, {
-        relations: [
-          "fulfillments",
-          "fulfillments.items",
-          "fulfillments.items.item",
-        ],
+    const { fulfillments } = await orderService
+      .withTransaction(transactionManager)
+      .createFulfillment(id, validated.items, {
+        metadata: validated.metadata,
+        no_notification: validated.no_notification,
       })
 
-      const pvInventoryServiceTx =
-        pvInventoryService.withTransaction(transactionManager)
+    const pvInventoryServiceTx =
+      pvInventoryService.withTransaction(transactionManager)
 
+    if (validated.location_id) {
       await updateInventoryAndReservations(
-        fulfillments.filter((f) => !existingFulfillmentSet.has(f.id)),
+        fulfillments.filter((f) => !existingFulfillmentMap[f.id]),
         {
           inventoryService: pvInventoryServiceTx,
-          locationId: validatedBody.location_id,
+          locationId: validated.location_id,
         }
       )
     }
@@ -154,7 +143,7 @@ export default async (req, res) => {
   res.json({ order: cleanResponseData(order, []) })
 }
 
-export const updateInventoryAndReservations = async (
+const updateInventoryAndReservations = async (
   fulfillments: Fulfillment[],
   context: {
     inventoryService: ProductVariantInventoryService
@@ -163,39 +152,33 @@ export const updateInventoryAndReservations = async (
 ) => {
   const { inventoryService, locationId } = context
 
-  await Promise.all(
-    fulfillments.map(async ({ items }) => {
-      await inventoryService.validateInventoryAtLocation(
-        items.map(({ item, quantity }) => ({ ...item, quantity } as LineItem)),
-        locationId
-      )
-    })
-  )
+  fulfillments.map(async ({ items }) => {
+    await inventoryService.validateInventoryAtLocation(
+      items.map(({ item, quantity }) => ({ ...item, quantity } as LineItem)),
+      locationId
+    )
 
-  await Promise.all(
-    fulfillments.map(async ({ items }) => {
-      await Promise.all(
-        items.map(async ({ item, quantity }) => {
-          if (!item.variant_id) {
-            return
-          }
+    await Promise.all(
+      items.map(async ({ item, quantity }) => {
+        if (!item.variant_id) {
+          return
+        }
 
-          await inventoryService.adjustReservationsQuantityByLineItem(
-            item.id,
-            item.variant_id,
-            locationId,
-            -quantity
-          )
+        await inventoryService.adjustReservationsQuantityByLineItem(
+          item.id,
+          item.variant_id,
+          locationId,
+          -quantity
+        )
 
-          await inventoryService.adjustInventory(
-            item.variant_id,
-            locationId,
-            -quantity
-          )
-        })
-      )
-    })
-  )
+        await inventoryService.adjustInventory(
+          item.variant_id,
+          locationId,
+          -quantity
+        )
+      })
+    )
+  })
 }
 
 /**

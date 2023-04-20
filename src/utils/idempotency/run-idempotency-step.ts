@@ -13,11 +13,7 @@ export type RunIdempotencyStepOptions = {
 }
 
 export async function runIdempotencyStep(
-  handler: ({
-    manager,
-  }: {
-    manager: EntityManager
-  }) => Promise<IdempotencyCallbackResult>,
+  handler: ({ manager: EntityManager }) => Promise<IdempotencyCallbackResult>,
   {
     manager,
     idempotencyKey,

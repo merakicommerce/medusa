@@ -1,9 +1,11 @@
+import { defaultStoreOrdersFields, defaultStoreOrdersRelations } from "./index"
+
 import { OrderService } from "../../../../services"
 import { FindParams } from "../../../../types/common"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [get] /store/orders/{id}
+ * @oas [get] /orders/{id}
  * operationId: GetOrdersOrder
  * summary: Get an Order
  * description: "Retrieves an Order"
@@ -28,7 +30,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/orders/{id}'
  * tags:
- *   - Orders
+ *   - Order
  * responses:
  *   200:
  *     description: OK

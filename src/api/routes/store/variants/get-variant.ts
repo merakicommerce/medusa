@@ -10,9 +10,11 @@ import { PriceSelectionParams } from "../../../../types/price-selection"
 import { defaultStoreVariantRelations } from "."
 import { validator } from "../../../../utils/validator"
 import { IsOptional, IsString } from "class-validator"
+import PublishableAPIKeysFeatureFlag from "../../../../loaders/feature-flags/publishable-api-keys"
+import { FlagRouter } from "../../../../utils/flag-router"
 
 /**
- * @oas [get] /store/variants/{variant_id}
+ * @oas [get] /variants/{variant_id}
  * operationId: GetVariantsVariant
  * summary: Get a Product Variant
  * description: "Retrieves a Product Variant by id"
@@ -40,7 +42,7 @@ import { IsOptional, IsString } from "class-validator"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/variants/{id}'
  * tags:
- *   - Variants
+ *   - Product Variant
  * responses:
  *   200:
  *     description: OK
@@ -80,8 +82,11 @@ export default async (req, res) => {
   })
 
   let sales_channel_id = validated.sales_channel_id
-  if (req.publishableApiKeyScopes?.sales_channel_ids.length === 1) {
-    sales_channel_id = req.publishableApiKeyScopes.sales_channel_ids[0]
+  const featureFlagRouter: FlagRouter = req.scope.resolve("featureFlagRouter")
+  if (featureFlagRouter.isFeatureEnabled(PublishableAPIKeysFeatureFlag.key)) {
+    if (req.publishableApiKeyScopes?.sales_channel_id.length === 1) {
+      sales_channel_id = req.publishableApiKeyScopes.sales_channel_id[0]
+    }
   }
 
   let regionId = validated.region_id

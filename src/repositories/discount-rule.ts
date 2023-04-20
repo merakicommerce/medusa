@@ -1,5 +1,5 @@
-import { DiscountRule } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { DiscountRule } from "../models/discount-rule"
 
-export const DiscountRuleRepository = dataSource.getRepository(DiscountRule)
-export default DiscountRuleRepository
+@EntityRepository(DiscountRule)
+export class DiscountRuleRepository extends Repository<DiscountRule> {}

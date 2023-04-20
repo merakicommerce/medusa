@@ -10,7 +10,7 @@ import { Type } from "class-transformer"
 import { Request, Response } from "express"
 
 /**
- * @oas [get] /admin/product-tags
+ * @oas [get] /product-tags
  * operationId: "GetProductTags"
  * summary: "List Product Tags"
  * description: "Retrieve a list of Product Tags."
@@ -106,7 +106,7 @@ import { Request, Response } from "express"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Product Tags
+ *   - Product Tag
  * responses:
  *  "200":
  *    description: OK

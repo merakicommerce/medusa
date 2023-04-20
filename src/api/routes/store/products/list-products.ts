@@ -11,6 +11,7 @@ import {
   CartService,
   ProductService,
   ProductVariantInventoryService,
+  RegionService,
 } from "../../../../services"
 import SalesChannelFeatureFlag from "../../../../loaders/feature-flags/sales-channels"
 import PricingService from "../../../../services/pricing"
@@ -19,11 +20,12 @@ import { PriceSelectionParams } from "../../../../types/price-selection"
 import { FeatureFlagDecorators } from "../../../../utils/feature-flag-decorators"
 import { optionalBooleanMapper } from "../../../../utils/validators/is-boolean"
 import { IsType } from "../../../../utils/validators/is-type"
+import { FlagRouter } from "../../../../utils/flag-router"
+import PublishableAPIKeysFeatureFlag from "../../../../loaders/feature-flags/publishable-api-keys"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
-import { defaultStoreCategoryScope } from "../product-categories"
 
 /**
- * @oas [get] /store/products
+ * @oas [get] /products
  * operationId: GetProducts
  * summary: List Products
  * description: "Retrieves a list of Products."
@@ -160,7 +162,7 @@ import { defaultStoreCategoryScope } from "../product-categories"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/products'
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -185,96 +187,62 @@ export default async (req, res) => {
     req.scope.resolve("productVariantInventoryService")
   const pricingService: PricingService = req.scope.resolve("pricingService")
   const cartService: CartService = req.scope.resolve("cartService")
+  const regionService: RegionService = req.scope.resolve("regionService")
 
   const validated = req.validatedQuery as StoreGetProductsParams
-
   let {
     cart_id,
     region_id: regionId,
     currency_code: currencyCode,
     ...filterableFields
   } = req.filterableFields
-
   const listConfig = req.listConfig
 
   // get only published products for store endpoint
   filterableFields["status"] = ["published"]
-  // store APIs only receive active and public categories to query from
-  filterableFields["categories"] = {
-    ...(filterableFields.categories || {}),
-    // Store APIs are only allowed to query active and public categories
-    ...defaultStoreCategoryScope,
-  }
 
-  if (req.publishableApiKeyScopes?.sales_channel_ids.length) {
-    filterableFields.sales_channel_id =
-      filterableFields.sales_channel_id ||
-      req.publishableApiKeyScopes.sales_channel_ids
+  const featureFlagRouter: FlagRouter = req.scope.resolve("featureFlagRouter")
+  if (featureFlagRouter.isFeatureEnabled(PublishableAPIKeysFeatureFlag.key)) {
+    if (req.publishableApiKeyScopes?.sales_channel_id.length) {
+      filterableFields.sales_channel_id =
+        filterableFields.sales_channel_id ||
+        req.publishableApiKeyScopes.sales_channel_id
 
-    if (!listConfig.relations.includes("listConfig.relations")) {
       listConfig.relations.push("sales_channels")
     }
   }
 
-  const manager = req.scope.resolve("manager")
+  const [rawProducts, count] = await productService.listAndCount(
+    filterableFields,
+    listConfig
+  )
 
-  const [computedProducts, count] = await manager.transaction(
-    async (transactionManager) => {
-      const promises: Promise<any>[] = []
+  if (validated.cart_id) {
+    const cart = await cartService.retrieve(validated.cart_id, {
+      select: ["id", "region_id"],
+    })
+    const region = await regionService.retrieve(cart.region_id, {
+      select: ["id", "currency_code"],
+    })
+    regionId = region.id
+    currencyCode = region.currency_code
+  }
 
-      promises.push(
-        productService
-          .withTransaction(transactionManager)
-          .listAndCount(filterableFields, listConfig)
-      )
+  const pricedProducts = await pricingService.setProductPrices(rawProducts, {
+    cart_id: cart_id,
+    region_id: regionId,
+    currency_code: currencyCode,
+    customer_id: req.user?.customer_id,
+    include_discount_prices: true,
+  })
 
-      if (validated.cart_id) {
-        promises.push(
-          cartService
-            .withTransaction(transactionManager)
-            .retrieve(validated.cart_id, {
-              select: ["id", "region_id"] as any,
-              relations: ["region"],
-            })
-        )
-      }
-
-      const [[rawProducts, count], cart] = await Promise.all(promises)
-
-      if (validated.cart_id) {
-        regionId = cart.region_id
-        currencyCode = cart.region.currency_code
-      }
-
-      // Create a new reference just for naming purpose
-      const computedProducts = rawProducts
-
-      // We can run them concurrently as the new properties are assigned to the references
-      // of the appropriate entity
-      await Promise.all([
-        pricingService
-          .withTransaction(transactionManager)
-          .setProductPrices(computedProducts, {
-            cart_id: cart_id,
-            region_id: regionId,
-            currency_code: currencyCode,
-            customer_id: req.user?.customer_id,
-            include_discount_prices: true,
-          }),
-        productVariantInventoryService
-          .withTransaction(transactionManager)
-          .setProductAvailability(
-            computedProducts,
-            filterableFields.sales_channel_id
-          ),
-      ])
-
-      return [computedProducts, count]
-    }
+  const products = await productVariantInventoryService.setProductAvailability(
+    pricedProducts,
+    filterableFields.sales_channel_id
   )
 
   res.json({
-    products: cleanResponseData(computedProducts, req.allowedProperties || []),
+    products: cleanResponseData(products, req.allowedProperties || []),
     count,
     offset: validated.offset,
     limit: validated.limit,

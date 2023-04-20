@@ -7,7 +7,7 @@ import RegionService from "../../../../services/region"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/regions/{id}/payment-providers
+ * @oas [post] /regions/{id}/payment-providers
  * operationId: "PostRegionsRegionPaymentProviders"
  * summary: "Add Payment Provider"
  * description: "Adds a Payment Provider to a Region"
@@ -47,7 +47,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Regions
+ *   - Region
  * responses:
  *   200:
  *     description: OK

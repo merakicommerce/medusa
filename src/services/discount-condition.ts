@@ -1,6 +1,6 @@
 import { isDefined, MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
-import { TransactionBaseService } from "../interfaces"
+import { EventBusService } from "."
 import {
   DiscountCondition,
   DiscountConditionCustomerGroup,
@@ -13,8 +13,8 @@ import {
 import { DiscountConditionRepository } from "../repositories/discount-condition"
 import { FindConfig } from "../types/common"
 import { DiscountConditionInput } from "../types/discount"
+import { TransactionBaseService } from "../interfaces"
 import { buildQuery, PostgresError } from "../utils"
-import EventBusService from "./event-bus"
 
 type InjectedDependencies = {
   manager: EntityManager
@@ -31,13 +31,17 @@ class DiscountConditionService extends TransactionBaseService {
   protected readonly discountConditionRepository_: typeof DiscountConditionRepository
   protected readonly eventBus_: EventBusService
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   constructor({
+    manager,
     discountConditionRepository,
     eventBusService,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.discountConditionRepository_ = discountConditionRepository
     this.eventBus_ = eventBusService
   }
@@ -53,7 +57,8 @@ class DiscountConditionService extends TransactionBaseService {
       )
     }
 
-    const conditionRepo = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const conditionRepo = manager.getCustomRepository(
       this.discountConditionRepository_
     )
 
@@ -134,9 +139,8 @@ class DiscountConditionService extends TransactionBaseService {
           )
         }
 
-        const discountConditionRepo = manager.withRepository(
-          this.discountConditionRepository_
-        )
+        const discountConditionRepo: DiscountConditionRepository =
+          manager.getCustomRepository(this.discountConditionRepository_)
 
         if (data.id) {
           const resolvedCondition = await this.retrieve(data.id)
@@ -195,9 +199,8 @@ class DiscountConditionService extends TransactionBaseService {
         )
       }
 
-      const discountConditionRepo = manager.withRepository(
-        this.discountConditionRepository_
-      )
+      const discountConditionRepo: DiscountConditionRepository =
+        manager.getCustomRepository(this.discountConditionRepository_)
 
       const resolvedCondition = await this.retrieve(data.id)
 
@@ -216,7 +219,7 @@ class DiscountConditionService extends TransactionBaseService {
 
   async delete(discountConditionId: string): Promise<DiscountCondition | void> {
     return await this.atomicPhase_(async (manager: EntityManager) => {
-      const conditionRepo = manager.withRepository(
+      const conditionRepo = manager.getCustomRepository(
         this.discountConditionRepository_
       )
 

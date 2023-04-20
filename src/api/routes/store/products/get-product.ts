@@ -1,4 +1,6 @@
 import { IsOptional, IsString } from "class-validator"
+import { defaultStoreProductsRelations } from "."
+import PublishableAPIKeysFeatureFlag from "../../../../loaders/feature-flags/publishable-api-keys"
 import {
   CartService,
   PricingService,
@@ -7,10 +9,11 @@ import {
   RegionService,
 } from "../../../../services"
 import { PriceSelectionParams } from "../../../../types/price-selection"
+import { FlagRouter } from "../../../../utils/flag-router"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [get] /store/products/{id}
+ * @oas [get] /products/{id}
  * operationId: GetProductsProduct
  * summary: Get a Product
  * description: "Retrieves a Product."
@@ -49,7 +52,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/products/{id}'
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -84,8 +87,11 @@ export default async (req, res) => {
   const rawProduct = await productService.retrieve(id, req.retrieveConfig)
 
   let sales_channel_id = validated.sales_channel_id
-  if (req.publishableApiKeyScopes?.sales_channel_ids.length === 1) {
-    sales_channel_id = req.publishableApiKeyScopes.sales_channel_ids[0]
+  const featureFlagRouter: FlagRouter = req.scope.resolve("featureFlagRouter")
+  if (featureFlagRouter.isFeatureEnabled(PublishableAPIKeysFeatureFlag.key)) {
+    if (req.publishableApiKeyScopes?.sales_channel_id.length === 1) {
+      sales_channel_id = req.publishableApiKeyScopes.sales_channel_id[0]
+    }
   }
 
   let regionId = validated.region_id

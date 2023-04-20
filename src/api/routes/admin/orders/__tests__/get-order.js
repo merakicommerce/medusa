@@ -1,10 +1,7 @@
 import { IdMap } from "medusa-test-utils"
 import { request } from "../../../../../helpers/test-request"
 import { OrderServiceMock } from "../../../../../services/__mocks__/order"
-import {
-  defaultAdminOrdersFields,
-  defaultAdminOrdersRelations,
-} from "../../../../../types/orders"
+import { defaultAdminOrdersFields, defaultAdminOrdersRelations } from "../index"
 
 describe("GET /admin/orders", () => {
   describe("successfully gets an order", () => {

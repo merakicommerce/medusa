@@ -1,34 +1,29 @@
-import { IEventBusService, ISearchService } from "@medusajs/types"
-import { indexTypes } from "medusa-core-utils"
-import ProductCategoryFeatureFlag from "../loaders/feature-flags/product-categories"
+import EventBusService from "../services/event-bus"
 import { SEARCH_INDEX_EVENT } from "../loaders/search-index"
-import { Product } from "../models"
 import ProductService from "../services/product"
-import { FlagRouter } from "../utils/flag-router"
+import { indexTypes } from "medusa-core-utils"
+import { Product } from "../models"
+import { ISearchService } from "../interfaces"
 
 type InjectedDependencies = {
-  eventBusService: IEventBusService
+  eventBusService: EventBusService
   searchService: ISearchService
   productService: ProductService
-  featureFlagRouter: FlagRouter
 }
 
 class SearchIndexingSubscriber {
-  private readonly eventBusService_: IEventBusService
+  private readonly eventBusService_: EventBusService
   private readonly searchService_: ISearchService
   private readonly productService_: ProductService
-  private readonly featureFlagRouter_: FlagRouter
 
   constructor({
     eventBusService,
     searchService,
     productService,
-    featureFlagRouter,
   }: InjectedDependencies) {
     this.eventBusService_ = eventBusService
     this.searchService_ = searchService
     this.productService_ = productService
-    this.featureFlagRouter_ = featureFlagRouter
 
     this.eventBusService_.subscribe(SEARCH_INDEX_EVENT, this.indexDocuments)
   }
@@ -59,27 +54,36 @@ class SearchIndexingSubscriber {
     lastSeenId: string,
     take: number
   ): Promise<Product[]> {
-    const relations = [
-      "variants",
-      "tags",
-      "type",
-      "collection",
-      "variants.prices",
-      "images",
-      "variants.options",
-      "options",
-    ]
-
-    if (
-      this.featureFlagRouter_.isFeatureEnabled(ProductCategoryFeatureFlag.key)
-    ) {
-      relations.push("categories")
-    }
-
     return await this.productService_.list(
       { id: { gt: lastSeenId } },
       {
-        relations,
+        select: [
+          "id",
+          "title",
+          "status",
+          "subtitle",
+          "description",
+          "handle",
+          "is_giftcard",
+          "discountable",
+          "thumbnail",
+          "profile_id",
+          "collection_id",
+          "type_id",
+          "origin_country",
+          "created_at",
+          "updated_at",
+        ],
+        relations: [
+          "variants",
+          "tags",
+          "type",
+          "collection",
+          "variants.prices",
+          "images",
+          "variants.options",
+          "options",
+        ],
         take: take,
         order: { id: "ASC" },
       }

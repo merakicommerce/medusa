@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm"
 import InviteService from "../../../../services/invite"
 
 /**
- * @oas [delete] /admin/invites/{invite_id}
+ * @oas [delete] /invites/{invite_id}
  * operationId: "DeleteInvitesInvite"
  * summary: "Delete an Invite"
  * description: "Deletes an Invite"
@@ -31,7 +31,7 @@ import InviteService from "../../../../services/invite"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Invites
+ *   - Invite
  * responses:
  *   200:
  *     description: OK

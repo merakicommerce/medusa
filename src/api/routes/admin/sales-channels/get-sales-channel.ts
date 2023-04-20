@@ -3,7 +3,7 @@ import { Request, Response } from "express"
 import { SalesChannelService } from "../../../../services"
 
 /**
- * @oas [get] /admin/sales-channels/{id}
+ * @oas [get] /sales-channels/{id}
  * operationId: "GetSalesChannelsSalesChannel"
  * summary: "Get a Sales Channel"
  * description: "Retrieves the sales channel."
@@ -32,7 +32,7 @@ import { SalesChannelService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Sales Channels
+ *   - Sales Channel
  * responses:
  *   200:
  *     description: OK

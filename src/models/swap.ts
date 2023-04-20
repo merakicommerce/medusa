@@ -6,12 +6,10 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne
+  OneToOne,
 } from "typeorm"
 import { DbAwareColumn, resolveDbType } from "../utils/db-aware-column"
 
-import { SoftDeletableEntity } from "../interfaces/models/soft-deletable-entity"
-import { generateEntityId } from "../utils/generate-entity-id"
 import { Address } from "./address"
 import { Cart } from "./cart"
 import { Fulfillment } from "./fulfillment"
@@ -20,6 +18,8 @@ import { Order } from "./order"
 import { Payment } from "./payment"
 import { Return } from "./return"
 import { ShippingMethod } from "./shipping-method"
+import { SoftDeletableEntity } from "../interfaces/models/soft-deletable-entity"
+import { generateEntityId } from "../utils/generate-entity-id"
 
 export enum SwapFulfillmentStatus {
   NOT_FULFILLED = "not_fulfilled",
@@ -248,7 +248,7 @@ export class Swap extends SoftDeletableEntity {
  *     nullable: true
  *     type: string
  *     externalDocs:
- *       url: https://docs.medusajs.com/modules/carts-and-checkout/cart.md#idempotency-key
+ *       url: https://docs.medusajs.com/advanced/backend/payment/overview#idempotency-key
  *       description: Learn more how to use the idempotency key.
  *   created_at:
  *     description: The date with timezone at which the resource was created.

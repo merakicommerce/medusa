@@ -1,23 +1,20 @@
-import { IsOptional, IsString, IsBoolean } from "class-validator"
+import { IsOptional, IsString } from "class-validator"
 import { Request, Response } from "express"
 import { Transform } from "class-transformer"
 
 import { ProductCategoryService } from "../../../../services"
 import { extendedFindParamsMixin } from "../../../../types/common"
-import { optionalBooleanMapper } from "../../../../utils/validators/is-boolean"
-import { defaultStoreCategoryScope } from "."
+import { defaultStoreScope } from "."
 
 /**
- * @oas [get] /store/product-categories
+ * @oas [get] /product-categories
  * operationId: "GetProductCategories"
  * summary: "List Product Categories"
  * description: "Retrieve a list of product categories."
  * x-authenticated: false
  * parameters:
- *   - (query) q {string} Query used for searching product category names or handles.
- *   - (query) handle {string} Query used for searching product category by handle.
+ *   - (query) q {string} Query used for searching product category names orhandles.
  *   - (query) parent_category_id {string} Returns categories scoped by parent
- *   - (query) include_descendants_tree {boolean} Include all nested descendants of category
  *   - (query) offset=0 {integer} How many product categories to skip in the result.
  *   - (query) limit=100 {integer} Limit the number of product categories returned.
  * x-codegen:
@@ -42,14 +39,14 @@ import { defaultStoreCategoryScope } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Product Categories
+ *   - Product Category
  * responses:
  *   "200":
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/StoreGetProductCategoriesRes"
+ *           $ref: "#/components/schemas/StoreProductCategoriesListRes"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":
@@ -69,14 +66,14 @@ export default async (req: Request, res: Response) => {
   )
 
   const selectors = Object.assign(
-    { ...defaultStoreCategoryScope },
+    { ...defaultStoreScope },
     req.filterableFields
   )
 
   const [data, count] = await productCategoryService.listAndCount(
     selectors,
     req.listConfig,
-    defaultStoreCategoryScope
+    defaultStoreScope
   )
 
   const { limit, offset } = req.validatedQuery
@@ -99,17 +96,8 @@ export class StoreGetProductCategoriesParams extends extendedFindParamsMixin({
 
   @IsString()
   @IsOptional()
-  handle?: string
-
-  @IsString()
-  @IsOptional()
   @Transform(({ value }) => {
     return value === "null" ? null : value
   })
   parent_category_id?: string | null
-
-  @IsBoolean()
-  @IsOptional()
-  @Transform(({ value }) => optionalBooleanMapper.get(value))
-  include_descendants_tree?: boolean
 }

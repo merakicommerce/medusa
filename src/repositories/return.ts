@@ -1,5 +1,5 @@
-import { Return } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { Return } from "../models/return"
 
-export const ReturnRepository = dataSource.getRepository(Return)
-export default ReturnRepository
+@EntityRepository(Return)
+export class ReturnRepository extends Repository<Return> {}

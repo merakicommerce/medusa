@@ -1,7 +1,7 @@
 import ProductCollectionService from "../../../../services/product-collection"
 
 /**
- * @oas [get] /store/collections/{id}
+ * @oas [get] /collections/{id}
  * operationId: "GetCollectionsCollection"
  * summary: "Get a Collection"
  * description: "Retrieves a Product Collection."
@@ -24,7 +24,7 @@ import ProductCollectionService from "../../../../services/product-collection"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/collections/{id}'
  * tags:
- *   - Collections
+ *   - Collection
  * responses:
  *  "200":
  *    description: OK

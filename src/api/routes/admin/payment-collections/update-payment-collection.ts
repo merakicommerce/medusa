@@ -4,7 +4,7 @@ import { EntityManager } from "typeorm"
 import { PaymentCollectionService } from "../../../../services"
 
 /**
- * @oas [post] /admin/payment-collections/{id}
+ * @oas [post] /payment-collections/{id}
  * operationId: "PostPaymentCollectionsPaymentCollection"
  * summary: "Update PaymentCollection"
  * description: "Updates a PaymentCollection."
@@ -44,7 +44,7 @@ import { PaymentCollectionService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Payment Collections
+ *   - PaymentCollection
  * responses:
  *   200:
  *     description: OK

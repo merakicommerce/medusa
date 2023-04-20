@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm"
 import PriceListService from "../../../../services/price-list"
 
 /**
- * @oas [delete] /admin/price-lists/{id}
+ * @oas [delete] /price-lists/{id}
  * operationId: "DeletePriceListsPriceList"
  * summary: "Delete a Price List"
  * description: "Deletes a Price List"
@@ -31,7 +31,7 @@ import PriceListService from "../../../../services/price-list"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Price Lists
+ *   - Price List
  * responses:
  *   200:
  *     description: OK

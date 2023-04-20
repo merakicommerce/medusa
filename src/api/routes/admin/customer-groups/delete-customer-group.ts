@@ -4,7 +4,7 @@ import { CustomerGroupService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [delete] /admin/customer-groups/{id}
+ * @oas [delete] /customer-groups/{id}
  * operationId: "DeleteCustomerGroupsCustomerGroup"
  * summary: "Delete a Customer Group"
  * description: "Deletes a CustomerGroup."
@@ -33,7 +33,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Customer Groups
+ *   - Customer Group
  * responses:
  *   200:
  *     description: OK

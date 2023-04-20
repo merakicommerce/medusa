@@ -1,6 +1,6 @@
-import { GiftCardTransaction } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { GiftCardTransaction } from "../models/gift-card-transaction"
 
-export const GiftCardTransactionRepository =
-  dataSource.getRepository(GiftCardTransaction)
-export default GiftCardTransactionRepository
+@EntityRepository(GiftCardTransaction)
+// eslint-disable-next-line max-len
+export class GiftCardTransactionRepository extends Repository<GiftCardTransaction> {}

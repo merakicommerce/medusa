@@ -216,7 +216,7 @@ const executeTest =
     }
 
     const mockEntityManager = {
-      withRepository: (repotype) => mockMoneyAmountRepository,
+      getCustomRepository: (repotype) => mockMoneyAmountRepository,
     }
 
     const featureFlagRouter = new FlagRouter({

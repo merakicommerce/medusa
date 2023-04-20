@@ -1,12 +1,15 @@
 import { IsNotEmpty, IsString } from "class-validator"
 import { MedusaError } from "medusa-core-utils"
-import { CustomerService, OrderService } from "../../../../services"
-import EventBusService from "../../../../services/event-bus"
+import {
+  CustomerService,
+  EventBusService,
+  OrderService,
+} from "../../../../services"
 import TokenService from "../../../../services/token"
 import { TokenEvents } from "../../../../types/token"
 
 /**
- * @oas [post] /store/orders/batch/customer/token
+ * @oas [post] /orders/batch/customer/token
  * operationId: "PostOrdersCustomerOrderClaim"
  * summary: "Claim an Order"
  * description: "Sends an email to emails registered to orders provided with link to transfer order ownership"
@@ -45,7 +48,7 @@ import { TokenEvents } from "../../../../types/token"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Orders
+ *   - Invite
  * responses:
  *   200:
  *     description: OK

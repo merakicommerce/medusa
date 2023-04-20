@@ -10,7 +10,7 @@ import { validator } from "../../../../utils/validator"
 import { isDefined } from "medusa-core-utils"
 
 /**
- * @oas [post] /admin/tax-rates/{id}
+ * @oas [post] /tax-rates/{id}
  * operationId: "PostTaxRatesTaxRate"
  * summary: "Update a Tax Rate"
  * description: "Updates a Tax Rate"
@@ -69,7 +69,7 @@ import { isDefined } from "medusa-core-utils"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Tax Rates
+ *   - Tax Rate
  * responses:
  *   200:
  *     description: OK

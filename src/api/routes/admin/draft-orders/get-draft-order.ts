@@ -10,7 +10,7 @@ import { DraftOrder } from "../../../.."
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [get] /admin/draft-orders/{id}
+ * @oas [get] /draft-orders/{id}
  * operationId: "GetDraftOrdersDraftOrder"
  * summary: "Get a Draft Order"
  * description: "Retrieves a Draft Order."
@@ -39,7 +39,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Draft Orders
+ *   - Draft Order
  * responses:
  *   200:
  *     description: OK

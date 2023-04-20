@@ -2,7 +2,7 @@ import { CartService, PricingService } from "../../../../services"
 import ShippingProfileService from "../../../../services/shipping-profile"
 
 /**
- * @oas [get] /store/shipping-options/{cart_id}
+ * @oas [get] /shipping-options/{cart_id}
  * operationId: GetShippingOptionsCartId
  * summary: List for Cart
  * description: "Retrieves a list of Shipping Options available to a cart."
@@ -25,14 +25,14 @@ import ShippingProfileService from "../../../../services/shipping-profile"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/shipping-options/{cart_id}'
  * tags:
- *   - Shipping Options
+ *   - Shipping Option
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/StoreCartShippingOptionsListRes"
+ *           $ref: "#/components/schemas/StoreShippingOptionsListRes"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "404":

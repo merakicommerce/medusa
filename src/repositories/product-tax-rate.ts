@@ -1,5 +1,5 @@
-import { ProductTaxRate } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { ProductTaxRate } from "../models/product-tax-rate"
 
-export const ProductTaxRateRepository = dataSource.getRepository(ProductTaxRate)
-export default ProductTaxRateRepository
+@EntityRepository(ProductTaxRate)
+export class ProductTaxRateRepository extends Repository<ProductTaxRate> {}

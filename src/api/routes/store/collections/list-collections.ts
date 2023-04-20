@@ -5,22 +5,13 @@ import ProductCollectionService from "../../../../services/product-collection"
 import { Type } from "class-transformer"
 
 /**
- * @oas [get] /store/collections
+ * @oas [get] /collections
  * operationId: "GetCollections"
  * summary: "List Collections"
  * description: "Retrieve a list of Product Collection."
  * parameters:
  *   - (query) offset=0 {integer} The number of collections to skip before starting to collect the collections set
  *   - (query) limit=10 {integer} The number of collections to return
- *   - in: query
- *     name: handle
- *     style: form
- *     explode: false
- *     description: Filter by the collection handle
- *     schema:
- *       type: array
- *       items:
- *         type: string
  *   - in: query
  *     name: created_at
  *     description: Date comparison for when resulting collections were created.
@@ -83,7 +74,7 @@ import { Type } from "class-transformer"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/collections'
  * tags:
- *   - Collections
+ *   - Collection
  * responses:
  *  "200":
  *    description: OK

@@ -20,6 +20,9 @@ type InjectedDependencies = {
 type NotificationProviderKey = `noti_${string}`
 
 class NotificationService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected subscribers_ = {}
   protected attachmentGenerator_: unknown = null
   protected readonly container_: InjectedDependencies & {
@@ -33,12 +36,20 @@ class NotificationService extends TransactionBaseService {
   constructor(container: InjectedDependencies) {
     super(container)
 
-    const { notificationProviderRepository, notificationRepository, logger } =
-      container
+    const {
+      manager,
+      notificationProviderRepository,
+      notificationRepository,
+      logger,
+    } = container
 
     this.container_ = container
 
+    /** @private @const {EntityManager} */
+    this.manager_ = manager
     this.logger_ = logger
+
+    /** @private @const {NotificationRepository} */
     this.notificationRepository_ = notificationRepository
     this.notificationProviderRepository_ = notificationProviderRepository
   }
@@ -57,10 +68,8 @@ class NotificationService extends TransactionBaseService {
    * @param providerIds - a list of provider ids
    */
   async registerInstalledProviders(providerIds: string[]): Promise<void> {
-    const { notificationProviderRepository } = this.container_
-    const model = this.activeManager_.withRepository(
-      notificationProviderRepository
-    )
+    const { manager, notificationProviderRepository } = this.container_
+    const model = manager.getCustomRepository(notificationProviderRepository)
     await model.update({}, { is_installed: false })
     for (const id of providerIds) {
       const n = model.create({ id, is_installed: true })
@@ -82,7 +91,7 @@ class NotificationService extends TransactionBaseService {
       order: { created_at: "DESC" },
     }
   ): Promise<Notification[]> {
-    const notiRepo = this.activeManager_.withRepository(
+    const notiRepo = this.manager_.getCustomRepository(
       this.notificationRepository_
     )
     const query = buildQuery(selector, config)
@@ -99,7 +108,7 @@ class NotificationService extends TransactionBaseService {
     id: string,
     config: FindConfig<Notification> = {}
   ): Promise<Notification | never> {
-    const notiRepository = this.activeManager_.withRepository(
+    const notiRepository = this.manager_.getCustomRepository(
       this.notificationRepository_
     )
 
@@ -212,7 +221,7 @@ class NotificationService extends TransactionBaseService {
       }
 
       const { to, data } = result
-      const notiRepo = transactionManager.withRepository(
+      const notiRepo = transactionManager.getCustomRepository(
         this.notificationRepository_
       )
 
@@ -256,7 +265,7 @@ class NotificationService extends TransactionBaseService {
         this.attachmentGenerator_
       )
 
-      const notiRepo = transactionManager.withRepository(
+      const notiRepo = transactionManager.getCustomRepository(
         this.notificationRepository_
       )
       const resendNoti: Record<string, unknown> = { ...notification, id: null }

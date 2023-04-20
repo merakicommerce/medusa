@@ -14,11 +14,9 @@ import { EntityManager } from "typeorm"
 import TaxInclusivePricingFeatureFlag from "../../../../loaders/feature-flags/tax-inclusive-pricing"
 import { FeatureFlagDecorators } from "../../../../utils/feature-flag-decorators"
 import { validator } from "../../../../utils/validator"
-import { ShippingOptionService } from "../../../../services"
-import { UpdateShippingOptionInput } from "../../../../types/shipping-options"
 
 /**
- * @oas [post] /admin/shipping-options/{id}
+ * @oas [post] /shipping-options/{id}
  * operationId: "PostShippingOptionsOption"
  * summary: "Update Shipping Option"
  * description: "Updates a Shipping Option"
@@ -70,7 +68,7 @@ import { UpdateShippingOptionInput } from "../../../../types/shipping-options"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Shipping Options
+ *   - Shipping Option
  * responses:
  *   200:
  *     description: OK
@@ -94,14 +92,9 @@ import { UpdateShippingOptionInput } from "../../../../types/shipping-options"
 export default async (req, res) => {
   const { option_id } = req.params
 
-  const validated = (await validator(
-    AdminPostShippingOptionsOptionReq,
-    req.body
-  )) as UpdateShippingOptionInput
+  const validated = await validator(AdminPostShippingOptionsOptionReq, req.body)
 
-  const optionService: ShippingOptionService = req.scope.resolve(
-    "shippingOptionService"
-  )
+  const optionService = req.scope.resolve("shippingOptionService")
 
   const manager: EntityManager = req.scope.resolve("manager")
   await manager.transaction(async (transactionManager) => {

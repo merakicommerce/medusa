@@ -1,6 +1,5 @@
-import { ShippingProfile } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { ShippingProfile } from "../models/shipping-profile"
 
-export const ShippingProfileRepository =
-  dataSource.getRepository(ShippingProfile)
-export default ShippingProfileRepository
+@EntityRepository(ShippingProfile)
+export class ShippingProfileRepository extends Repository<ShippingProfile> {}

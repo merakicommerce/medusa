@@ -12,7 +12,7 @@ import { Type } from "class-transformer"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [get] /admin/draft-orders
+ * @oas [get] /draft-orders
  * operationId: "GetDraftOrders"
  * summary: "List Draft Orders"
  * description: "Retrieves an list of Draft Orders"
@@ -44,7 +44,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Draft Orders
+ *   - Draft Order
  * responses:
  *   200:
  *     description: OK

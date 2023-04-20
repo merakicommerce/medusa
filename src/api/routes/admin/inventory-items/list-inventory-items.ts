@@ -1,25 +1,29 @@
-import { IInventoryService } from "@medusajs/types"
-import { Transform } from "class-transformer"
-import { IsBoolean, IsOptional, IsString } from "class-validator"
 import { Request, Response } from "express"
+import { IsString, IsBoolean, IsOptional } from "class-validator"
+import { Transform } from "class-transformer"
+import { IsType } from "../../../../utils/validators/is-type"
+import { getLevelsByInventoryItemId } from "./utils/join-levels"
+import {
+  getVariantsByInventoryItemId,
+  InventoryItemsWithVariants,
+} from "./utils/join-variants"
 import {
   ProductVariantInventoryService,
   ProductVariantService,
 } from "../../../../services"
+import { IInventoryService } from "../../../../interfaces"
 import {
   extendedFindParamsMixin,
-  NumericalComparisonOperator,
   StringComparisonOperator,
+  NumericalComparisonOperator,
 } from "../../../../types/common"
-import { IsType } from "../../../../utils/validators/is-type"
-import { getLevelsByInventoryItemId } from "./utils/join-levels"
-import { getVariantsByInventoryItemId } from "./utils/join-variants"
+import { AdminInventoryItemsListWithVariantsAndLocationLevelsRes } from "."
 
 /**
- * @oas [get] /admin/inventory-items
+ * @oas [get] /inventory-items
  * operationId: "GetInventoryItems"
- * summary: "List Inventory Items"
- * description: "Lists inventory items with the ability to apply filters or search queries on them."
+ * summary: "List inventory items."
+ * description: "Lists inventory items."
  * x-authenticated: true
  * parameters:
  *   - (query) offset=0 {integer} How many inventory items to skip in the result.
@@ -47,9 +51,6 @@ import { getVariantsByInventoryItemId } from "./utils/join-variants"
  *   - (query) height {string} height to search for.
  *   - (query) width {string} width to search for.
  *   - (query) requires_shipping {string} requires_shipping to search for.
- * x-codegen:
- *   method: list
- *   queryParams: AdminGetInventoryItemsParams
  * x-codeSamples:
  *   - lang: JavaScript
  *     label: JS Client
@@ -58,14 +59,15 @@ import { getVariantsByInventoryItemId } from "./utils/join-variants"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
  *       medusa.admin.inventoryItems.list()
- *       .then(({ inventory_items, count, offset, limit }) => {
+ *       .then(({ inventory_items }) => {
  *         console.log(inventory_items.length);
  *       });
  *   - lang: Shell
  *     label: cURL
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/admin/inventory-items' \
- *       --header 'Authorization: Bearer {api_token}'
+ *       --header 'Authorization: Bearer {api_token}' \
+ *       --header 'Content-Type: application/json'
  * security:
  *   - api_token: []
  *   - cookie_auth: []
@@ -123,14 +125,17 @@ export default async (req: Request, res: Response) => {
     inventoryService
   )
 
-  const variantsByInventoryItemId = await getVariantsByInventoryItemId(
-    inventoryItems,
-    productVariantInventoryService,
-    productVariantService
-  )
+  const variantsByInventoryItemId: InventoryItemsWithVariants =
+    await getVariantsByInventoryItemId(
+      inventoryItems,
+      productVariantInventoryService,
+      productVariantService
+    )
 
   const inventoryItemsWithVariantsAndLocationLevels = inventoryItems.map(
-    (inventoryItem) => {
+    (
+      inventoryItem
+    ): AdminInventoryItemsListWithVariantsAndLocationLevelsRes => {
       return {
         ...inventoryItem,
         variants: variantsByInventoryItemId[inventoryItem.id] ?? [],

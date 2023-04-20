@@ -2,7 +2,7 @@ import UserService from "../../../../services/user"
 import _ from "lodash"
 
 /**
- * @oas [get] /admin/auth
+ * @oas [get] /auth
  * operationId: "GetAuth"
  * summary: "Get Current User"
  * x-authenticated: true

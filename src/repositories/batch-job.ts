@@ -1,5 +1,5 @@
+import { EntityRepository, Repository } from "typeorm"
 import { BatchJob } from "../models"
-import { dataSource } from "../loaders/database"
 
-export const BatchJobRepository = dataSource.getRepository(BatchJob)
-export default BatchJobRepository
+@EntityRepository(BatchJob)
+export class BatchJobRepository extends Repository<BatchJob> {}

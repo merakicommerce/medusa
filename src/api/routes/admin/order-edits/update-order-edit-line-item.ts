@@ -8,7 +8,7 @@ import {
 } from "../../../../types/order-edit"
 
 /**
- * @oas [post] /admin/order-edits/{id}/items/{item_id}
+ * @oas [post] /order-edits/{id}/items/{item_id}
  * operationId: "PostOrderEditsEditLineItemsLineItem"
  * summary: "Upsert Line Item Change"
  * description: "Create or update the order edit change holding the line item changes"
@@ -47,7 +47,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK

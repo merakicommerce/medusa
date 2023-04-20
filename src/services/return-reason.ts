@@ -15,16 +15,20 @@ type InjectedDependencies = {
 class ReturnReasonService extends TransactionBaseService {
   protected readonly retReasonRepo_: typeof ReturnReasonRepository
 
-  constructor({ returnReasonRepository }: InjectedDependencies) {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
+  constructor({ manager, returnReasonRepository }: InjectedDependencies) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.retReasonRepo_ = returnReasonRepository
   }
 
   async create(data: CreateReturnReason): Promise<ReturnReason | never> {
     return await this.atomicPhase_(async (manager) => {
-      const rrRepo = manager.withRepository(this.retReasonRepo_)
+      const rrRepo = manager.getCustomRepository(this.retReasonRepo_)
 
       if (data.parent_return_reason_id && data.parent_return_reason_id !== "") {
         const parentReason = await this.retrieve(data.parent_return_reason_id)
@@ -45,7 +49,7 @@ class ReturnReasonService extends TransactionBaseService {
 
   async update(id: string, data: UpdateReturnReason): Promise<ReturnReason> {
     return await this.atomicPhase_(async (manager) => {
-      const rrRepo = manager.withRepository(this.retReasonRepo_)
+      const rrRepo = manager.getCustomRepository(this.retReasonRepo_)
       const reason = await this.retrieve(id)
 
       for (const key of Object.keys(data).filter(
@@ -73,7 +77,7 @@ class ReturnReasonService extends TransactionBaseService {
       order: { created_at: "DESC" },
     }
   ): Promise<ReturnReason[]> {
-    const rrRepo = this.activeManager_.withRepository(this.retReasonRepo_)
+    const rrRepo = this.manager_.getCustomRepository(this.retReasonRepo_)
     const query = buildQuery(selector, config)
     return rrRepo.find(query)
   }
@@ -95,7 +99,7 @@ class ReturnReasonService extends TransactionBaseService {
       )
     }
 
-    const rrRepo = this.activeManager_.withRepository(this.retReasonRepo_)
+    const rrRepo = this.manager_.getCustomRepository(this.retReasonRepo_)
 
     const query = buildQuery({ id: returnReasonId }, config)
     const item = await rrRepo.findOne(query)
@@ -112,7 +116,7 @@ class ReturnReasonService extends TransactionBaseService {
 
   async delete(returnReasonId: string): Promise<void> {
     return this.atomicPhase_(async (manager) => {
-      const rrRepo = manager.withRepository(this.retReasonRepo_)
+      const rrRepo = manager.getCustomRepository(this.retReasonRepo_)
 
       // We include the relation 'return_reason_children' to enable cascading deletes of return reasons if a parent is removed
       const reason = await this.retrieve(returnReasonId, {

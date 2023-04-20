@@ -1,5 +1,5 @@
 import { isDefined, MedusaError } from "medusa-core-utils"
-import { DeepPartial, EntityManager, FindOptionsWhere, ILike } from "typeorm"
+import { DeepPartial, EntityManager, ILike } from "typeorm"
 import { CustomerService } from "."
 import { CustomerGroup } from ".."
 import {
@@ -18,16 +18,21 @@ type CustomerGroupConstructorProps = {
 }
 
 class CustomerGroupService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly customerGroupRepository_: typeof CustomerGroupRepository
   protected readonly customerService_: CustomerService
 
   constructor({
+    manager,
     customerGroupRepository,
     customerService,
   }: CustomerGroupConstructorProps) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.customerGroupRepository_ = customerGroupRepository
     this.customerService_ = customerService
   }
@@ -40,7 +45,7 @@ class CustomerGroupService extends TransactionBaseService {
       )
     }
 
-    const cgRepo = this.activeManager_.withRepository(
+    const cgRepo = this.manager_.getCustomRepository(
       this.customerGroupRepository_
     )
 
@@ -65,7 +70,7 @@ class CustomerGroupService extends TransactionBaseService {
   async create(group: DeepPartial<CustomerGroup>): Promise<CustomerGroup> {
     return await this.atomicPhase_(async (manager) => {
       try {
-        const cgRepo: typeof CustomerGroupRepository = manager.withRepository(
+        const cgRepo: CustomerGroupRepository = manager.getCustomRepository(
           this.customerGroupRepository_
         )
 
@@ -99,7 +104,7 @@ class CustomerGroupService extends TransactionBaseService {
 
     return await this.atomicPhase_(
       async (manager) => {
-        const cgRepo: typeof CustomerGroupRepository = manager.withRepository(
+        const cgRepo: CustomerGroupRepository = manager.getCustomRepository(
           this.customerGroupRepository_
         )
         return await cgRepo.addCustomers(id, ids)
@@ -124,7 +129,7 @@ class CustomerGroupService extends TransactionBaseService {
     return await this.atomicPhase_(async (manager) => {
       const { metadata, ...properties } = update
 
-      const cgRepo: typeof CustomerGroupRepository = manager.withRepository(
+      const cgRepo: CustomerGroupRepository = manager.getCustomRepository(
         this.customerGroupRepository_
       )
 
@@ -152,7 +157,7 @@ class CustomerGroupService extends TransactionBaseService {
    */
   async delete(groupId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const cgRepo: typeof CustomerGroupRepository = manager.withRepository(
+      const cgRepo: CustomerGroupRepository = manager.getCustomRepository(
         this.customerGroupRepository_
       )
 
@@ -198,7 +203,7 @@ class CustomerGroupService extends TransactionBaseService {
     } = {},
     config: FindConfig<CustomerGroup>
   ): Promise<[CustomerGroup[], number]> {
-    const cgRepo = this.activeManager_.withRepository(
+    const cgRepo: CustomerGroupRepository = this.manager_.getCustomRepository(
       this.customerGroupRepository_
     )
 
@@ -208,8 +213,7 @@ class CustomerGroupService extends TransactionBaseService {
       delete selector.q
     }
 
-    const query = buildQuery<Selector<CustomerGroup>, any>(selector, config)
-    query.where = query.where as FindOptionsWhere<CustomerGroup>
+    const query = buildQuery(selector, config)
 
     if (q) {
       query.where.name = ILike(`%${q}%`)
@@ -237,7 +241,7 @@ class CustomerGroupService extends TransactionBaseService {
     id: string,
     customerIds: string[] | string
   ): Promise<CustomerGroup> {
-    const cgRepo = this.activeManager_.withRepository(
+    const cgRepo: CustomerGroupRepository = this.manager_.getCustomRepository(
       this.customerGroupRepository_
     )
     let ids: string[]

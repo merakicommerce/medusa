@@ -10,7 +10,7 @@ import { RefundReason } from "../../../../models"
 import { PaymentService } from "../../../../services"
 
 /**
- * @oas [post] /admin/payments/{id}/refund
+ * @oas [post] /payments/{id}/refund
  * operationId: "PostPaymentsPaymentRefunds"
  * summary: "Create a Refund"
  * description: "Issues a Refund."
@@ -54,7 +54,7 @@ import { PaymentService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Payments
+ *   - Payment
  * responses:
  *   200:
  *     description: OK

@@ -25,8 +25,6 @@ export default (app) => {
 /**
  * @schema AdminNotesRes
  * type: object
- * required:
- *   - note
  * properties:
  *   note:
  *     $ref: "#/components/schemas/Note"
@@ -38,10 +36,6 @@ export type AdminNotesRes = {
 /**
  * @schema AdminNotesDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -60,11 +54,6 @@ export type AdminNotesDeleteRes = DeleteResponse
 /**
  * @schema AdminNotesListRes
  * type: object
- * required:
- *   - notes
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   notes:
  *     type: array

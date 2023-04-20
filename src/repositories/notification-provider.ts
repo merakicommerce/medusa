@@ -1,6 +1,6 @@
+import { EntityRepository, Repository } from "typeorm"
 import { NotificationProvider } from "../models/notification-provider"
-import { dataSource } from "../loaders/database"
 
-export const NotificationProviderRepository =
-  dataSource.getRepository(NotificationProvider)
-export default NotificationProviderRepository
+@EntityRepository(NotificationProvider)
+// eslint-disable-next-line max-len
+export class NotificationProviderRepository extends Repository<NotificationProvider> {}

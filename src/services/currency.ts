@@ -22,18 +22,21 @@ export default class CurrencyService extends TransactionBaseService {
     UPDATED: "currency.updated",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly currencyRepository_: typeof CurrencyRepository
   protected readonly eventBusService_: EventBusService
   protected readonly featureFlagRouter_: FlagRouter
 
   constructor({
+    manager,
     currencyRepository,
     eventBusService,
     featureFlagRouter,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
-
+    this.manager_ = manager
     this.currencyRepository_ = currencyRepository
     this.eventBusService_ = eventBusService
     this.featureFlagRouter_ = featureFlagRouter
@@ -45,7 +48,7 @@ export default class CurrencyService extends TransactionBaseService {
    * @return The currency
    */
   async retrieveByCode(code: string): Promise<Currency | never> {
-    const currencyRepo = this.activeManager_.withRepository(
+    const currencyRepo = this.manager_.getCustomRepository(
       this.currencyRepository_
     )
 
@@ -82,7 +85,7 @@ export default class CurrencyService extends TransactionBaseService {
       take: 20,
     }
   ): Promise<[Currency[], number]> {
-    const productRepo = this.activeManager_.withRepository(
+    const productRepo = this.manager_.getCustomRepository(
       this.currencyRepository_
     )
 
@@ -114,7 +117,7 @@ export default class CurrencyService extends TransactionBaseService {
         }
       }
 
-      const currencyRepo = transactionManager.withRepository(
+      const currencyRepo = transactionManager.getCustomRepository(
         this.currencyRepository_
       )
       await currencyRepo.save(currency)

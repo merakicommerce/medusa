@@ -1,5 +1,5 @@
-import { User } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { User } from "../models/user"
 
-export const UserRepository = dataSource.getRepository(User)
-export default UserRepository
+@EntityRepository(User)
+export class UserRepository extends Repository<User> {}

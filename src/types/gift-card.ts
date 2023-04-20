@@ -11,7 +11,7 @@ export type CreateGiftCardInput = {
 
 export type UpdateGiftCardInput = {
   balance?: number
-  ends_at?: Date | null
+  ends_at?: Date
   is_disabled?: boolean
   region_id?: string
   metadata?: Record<string, unknown>

@@ -19,8 +19,6 @@ export default (app) => {
 /**
  * @schema AdminAppsRes
  * type: object
- * required:
- *   - apps
  * properties:
  *   apps:
  *     $ref: "#/components/schemas/OAuth"
@@ -32,8 +30,6 @@ export type AdminAppsRes = {
 /**
  * @schema AdminAppsListRes
  * type: object
- * required:
- *   - apps
  * properties:
  *   apps:
  *      type: array

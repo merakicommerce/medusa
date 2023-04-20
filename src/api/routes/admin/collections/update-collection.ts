@@ -2,10 +2,9 @@ import { IsObject, IsOptional, IsString } from "class-validator"
 import { Request, Response } from "express"
 import { EntityManager } from "typeorm"
 import ProductCollectionService from "../../../../services/product-collection"
-import { defaultAdminCollectionsRelations } from "."
 
 /**
- * @oas [post] /admin/collections/{id}
+ * @oas [post] /collections/{id}
  * operationId: "PostCollectionsCollection"
  * summary: "Update a Collection"
  * description: "Updates a Product Collection."
@@ -45,7 +44,7 @@ import { defaultAdminCollectionsRelations } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Collections
+ *   - Collection
  * responses:
  *  "200":
  *    description: OK
@@ -83,9 +82,7 @@ export default async (req: Request, res: Response) => {
       .update(id, validatedBody)
   })
 
-  const collection = await productCollectionService.retrieve(updated.id, {
-    relations: defaultAdminCollectionsRelations,
-  })
+  const collection = await productCollectionService.retrieve(updated.id)
 
   res.status(200).json({ collection })
 }

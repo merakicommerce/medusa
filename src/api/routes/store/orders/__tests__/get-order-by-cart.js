@@ -19,10 +19,8 @@ describe("GET /store/orders", () => {
     })
 
     it("calls orderService retrieve", () => {
-      expect(OrderServiceMock.retrieveByCartIdWithTotals).toHaveBeenCalledTimes(
-        1
-      )
-      expect(OrderServiceMock.retrieveByCartIdWithTotals).toHaveBeenCalledWith(
+      expect(OrderServiceMock.retrieveByCartId).toHaveBeenCalledTimes(1)
+      expect(OrderServiceMock.retrieveByCartId).toHaveBeenCalledWith(
         IdMap.getId("test-cart"),
         {
           select: defaultStoreOrdersFields,

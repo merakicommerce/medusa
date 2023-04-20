@@ -16,7 +16,7 @@ import { defaultAdminCustomersRelations } from "."
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/customers/{id}
+ * @oas [post] /customers/{id}
  * operationId: "PostCustomersCustomer"
  * summary: "Update a Customer"
  * description: "Updates a Customer."
@@ -58,7 +58,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Customers
+ *   - Customer
  * responses:
  *   200:
  *     description: OK

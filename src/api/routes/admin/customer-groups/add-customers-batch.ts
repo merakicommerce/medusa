@@ -8,7 +8,7 @@ import { ValidateNested } from "class-validator"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/customer-groups/{id}/customers/batch
+ * @oas [post] /customer-groups/{id}/customers/batch
  * operationId: "PostCustomerGroupsGroupCustomersBatch"
  * summary: "Add Customers"
  * description: "Adds a list of customers, represented by id's, to a customer group."
@@ -56,7 +56,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Customer Groups
+ *   - Customer Group
  * responses:
  *   200:
  *     description: OK

@@ -6,7 +6,7 @@ import { EntityManager } from "typeorm"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /admin/customer-groups
+ * @oas [post] /customer-groups
  * operationId: "PostCustomerGroups"
  * summary: "Create a Customer Group"
  * description: "Creates a CustomerGroup."
@@ -44,7 +44,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Customer Groups
+ *   - Customer Group
  * responses:
  *   200:
  *     description: OK

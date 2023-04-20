@@ -1,13 +1,13 @@
-import { Request, Response } from "express"
-
-import { EntityManager } from "typeorm"
 import { IsString } from "class-validator"
+import { Request, Response } from "express"
+import { EntityManager } from "typeorm"
+
 import { SalesChannelLocationService } from "../../../../services"
 
 /**
- * @oas [delete] /admin/sales-channels/{id}/stock-locations
+ * @oas [delete] /sales-channels/{id}/stock-locations
  * operationId: "DeleteSalesChannelsSalesChannelStockLocation"
- * summary: "Remove a Stock Location Association"
+ * summary: "Remove a stock location from a Sales Channel"
  * description: "Removes a stock location from a Sales Channel."
  * x-authenticated: true
  * parameters:
@@ -26,8 +26,8 @@ import { SalesChannelLocationService } from "../../../../services"
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.salesChannels.removeLocation(salesChannelId, {
- *         location_id: 'loc_id'
+ *       medusa.admin.salesChannels.removeLocation(sales_channel_id, {
+ *         location_id: 'App'
  *       })
  *       .then(({ sales_channel }) => {
  *         console.log(sales_channel.id);
@@ -39,13 +39,13 @@ import { SalesChannelLocationService } from "../../../../services"
  *       --header 'Authorization: Bearer {api_token}' \
  *       --header 'Content-Type: application/json' \
  *       --data-raw '{
- *           "locaton_id": "loc_id"
+ *           "locaton_id": "stock_location_id"
  *       }'
  * security:
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Sales Channels
+ *   - Sales Channel
  * responses:
  *   200:
  *     description: OK
@@ -80,7 +80,7 @@ export default async (req: Request, res: Response) => {
   await manager.transaction(async (transactionManager) => {
     await channelLocationService
       .withTransaction(transactionManager)
-      .removeLocation(validatedBody.location_id, id)
+      .removeLocation(id, validatedBody.location_id)
   })
 
   res.json({

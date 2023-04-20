@@ -1,5 +1,5 @@
-import { Note } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { Note } from "../models/note"
 
-export const NoteRepository = dataSource.getRepository(Note)
-export default NoteRepository
+@EntityRepository(Note)
+export class NoteRepository extends Repository<Note> {}

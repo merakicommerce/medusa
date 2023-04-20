@@ -1,28 +1,30 @@
-import { EventBusTypes, IInventoryService } from "@medusajs/types"
-import { TransactionBaseService } from "@medusajs/utils"
 import { EntityManager } from "typeorm"
-import SalesChannelLocationService from "./sales-channel-location"
+
+import { IInventoryService } from "../interfaces/services"
+
+import { SalesChannelLocationService, EventBusService } from "./"
 
 type InjectedDependencies = {
   inventoryService: IInventoryService
   salesChannelLocationService: SalesChannelLocationService
-  eventBusService: EventBusTypes.IEventBusService
+  eventBusService: EventBusService
   manager: EntityManager
 }
 
-class SalesChannelInventoryService extends TransactionBaseService {
+class SalesChannelInventoryService {
+  protected manager_: EntityManager
+
   protected readonly salesChannelLocationService_: SalesChannelLocationService
-  protected readonly eventBusService_: EventBusTypes.IEventBusService
+  protected readonly eventBusService_: EventBusService
   protected readonly inventoryService_: IInventoryService
 
   constructor({
     salesChannelLocationService,
     inventoryService,
     eventBusService,
+    manager,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
-    super(arguments[0])
-
+    this.manager_ = manager
     this.salesChannelLocationService_ = salesChannelLocationService
     this.eventBusService_ = eventBusService
     this.inventoryService_ = inventoryService
@@ -38,13 +40,13 @@ class SalesChannelInventoryService extends TransactionBaseService {
     salesChannelId: string,
     inventoryItemId: string
   ): Promise<number> {
-    const locationIds = await this.salesChannelLocationService_
-      .withTransaction(this.activeManager_)
-      .listLocationIds(salesChannelId)
+    const locations = await this.salesChannelLocationService_.listLocations(
+      salesChannelId
+    )
 
     return await this.inventoryService_.retrieveAvailableQuantity(
       inventoryItemId,
-      locationIds
+      locations
     )
   }
 }

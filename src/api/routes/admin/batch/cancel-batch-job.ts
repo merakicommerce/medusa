@@ -2,7 +2,7 @@ import { BatchJobService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/batch-jobs/{id}/cancel
+ * @oas [post] /batch-jobs/{id}/cancel
  * operationId: "PostBatchJobsBatchJobCancel"
  * summary: "Cancel a Batch Job"
  * description: "Marks a batch job as canceled"
@@ -31,7 +31,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Batch Jobs
+ *   - Batch Job
  * responses:
  *  "200":
  *    description: OK

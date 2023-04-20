@@ -5,10 +5,9 @@ import { Type } from "class-transformer"
 import { validator } from "../../../../utils/validator"
 import { FindConfig } from "../../../../types/common"
 import { Return } from "../../../../models"
-import { defaultRelationsList } from "."
 
 /**
- * @oas [get] /admin/returns
+ * @oas [get] /returns
  * operationId: "GetReturns"
  * summary: "List Returns"
  * description: "Retrieves a list of Returns"
@@ -38,7 +37,7 @@ import { defaultRelationsList } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Returns
+ *   - Return
  * responses:
  *   200:
  *     description: OK
@@ -67,7 +66,7 @@ export default async (req, res) => {
   const selector = {}
 
   const listConfig = {
-    relations: defaultRelationsList,
+    relations: ["swap", "order"],
     skip: validated.offset,
     take: validated.limit,
     order: { created_at: "DESC" },

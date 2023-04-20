@@ -3,7 +3,7 @@ import { Request, Response } from "express"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/discounts/{id}
+ * @oas [get] /discounts/{id}
  * operationId: "GetDiscountsDiscount"
  * summary: "Get a Discount"
  * description: "Retrieves a Discount"
@@ -35,7 +35,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount
  * responses:
  *   200:
  *     description: OK

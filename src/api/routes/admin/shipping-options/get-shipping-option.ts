@@ -1,7 +1,5 @@
-import { defaultFields, defaultRelations } from "."
-
 /**
- * @oas [get] /admin/shipping-options/{id}
+ * @oas [get] /shipping-options/{id}
  * operationId: "GetShippingOptionsOption"
  * summary: "Get a Shipping Option"
  * description: "Retrieves a Shipping Option."
@@ -30,7 +28,7 @@ import { defaultFields, defaultRelations } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Shipping Options
+ *   - Shipping Option
  * responses:
  *   200:
  *     description: OK
@@ -54,11 +52,7 @@ import { defaultFields, defaultRelations } from "."
 export default async (req, res) => {
   const { option_id } = req.params
   const optionService = req.scope.resolve("shippingOptionService")
-
-  const data = await optionService.retrieve(option_id, {
-    select: defaultFields,
-    relations: defaultRelations,
-  })
+  const data = await optionService.retrieve(option_id)
 
   res.status(200).json({ shipping_option: data })
 }

@@ -1,5 +1,5 @@
-import { Refund } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { Refund } from "../models/refund"
 
-export const RefundRepository = dataSource.getRepository(Refund)
-export default RefundRepository
+@EntityRepository(Refund)
+export class RefundRepository extends Repository<Refund> {}

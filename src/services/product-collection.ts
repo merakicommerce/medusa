@@ -1,15 +1,10 @@
 import { isDefined, MedusaError } from "medusa-core-utils"
-import {
-  EntityManager,
-  FindManyOptions,
-  FindOptionsWhere,
-  ILike,
-} from "typeorm"
+import { Brackets, EntityManager, ILike } from "typeorm"
 import { TransactionBaseService } from "../interfaces"
 import { ProductCollection } from "../models"
 import { ProductRepository } from "../repositories/product"
 import { ProductCollectionRepository } from "../repositories/product-collection"
-import { ExtendedFindConfig, FindConfig, Selector } from "../types/common"
+import { FindConfig, Selector } from "../types/common"
 import {
   CreateProductCollection,
   UpdateProductCollection,
@@ -24,35 +19,26 @@ type InjectedDependencies = {
   productCollectionRepository: typeof ProductCollectionRepository
 }
 
-type ListAndCountSelector = Selector<ProductCollection> & {
-  q?: string
-  discount_condition_id?: string
-}
-
 /**
  * Provides layer to manipulate product collections.
  */
 class ProductCollectionService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly eventBus_: EventBusService
   // eslint-disable-next-line max-len
   protected readonly productCollectionRepository_: typeof ProductCollectionRepository
   protected readonly productRepository_: typeof ProductRepository
 
-  static readonly Events = {
-    CREATED: "product-collection.created",
-    UPDATED: "product-collection.updated",
-    DELETED: "product-collection.deleted",
-    PRODUCTS_ADDED: "product-collection.products_added",
-    PRODUCTS_REMOVED: "product-collection.products_removed",
-  }
-
   constructor({
+    manager,
     productCollectionRepository,
     productRepository,
     eventBusService,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
+    this.manager_ = manager
 
     this.productCollectionRepository_ = productCollectionRepository
     this.productRepository_ = productRepository
@@ -76,7 +62,7 @@ class ProductCollectionService extends TransactionBaseService {
       )
     }
 
-    const collectionRepo = this.activeManager_.withRepository(
+    const collectionRepo = this.manager_.getCustomRepository(
       this.productCollectionRepository_
     )
 
@@ -103,7 +89,7 @@ class ProductCollectionService extends TransactionBaseService {
     collectionHandle: string,
     config: FindConfig<ProductCollection> = {}
   ): Promise<ProductCollection> {
-    const collectionRepo = this.activeManager_.withRepository(
+    const collectionRepo = this.manager_.getCustomRepository(
       this.productCollectionRepository_
     )
 
@@ -129,19 +115,12 @@ class ProductCollectionService extends TransactionBaseService {
     collection: CreateProductCollection
   ): Promise<ProductCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const collectionRepo = manager.withRepository(
+      const collectionRepo = manager.getCustomRepository(
         this.productCollectionRepository_
       )
-      let productCollection = collectionRepo.create(collection)
-      productCollection = await collectionRepo.save(productCollection);
 
-      await this.eventBus_
-        .withTransaction(manager)
-        .emit(ProductCollectionService.Events.CREATED, {
-          id: productCollection.id,
-        })
-
-      return productCollection
+      const productCollection = collectionRepo.create(collection)
+      return await collectionRepo.save(productCollection)
     })
   }
 
@@ -156,31 +135,23 @@ class ProductCollectionService extends TransactionBaseService {
     update: UpdateProductCollection
   ): Promise<ProductCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const collectionRepo = manager.withRepository(
+      const collectionRepo = manager.getCustomRepository(
         this.productCollectionRepository_
       )
 
-      let productCollection = await this.retrieve(collectionId)
+      const collection = await this.retrieve(collectionId)
 
       const { metadata, ...rest } = update
 
       if (metadata) {
-        productCollection.metadata = setMetadata(productCollection, metadata)
+        collection.metadata = setMetadata(collection, metadata)
       }
 
       for (const [key, value] of Object.entries(rest)) {
-        productCollection[key] = value
+        collection[key] = value
       }
 
-      productCollection = await collectionRepo.save(productCollection)
-
-      await this.eventBus_
-        .withTransaction(manager)
-        .emit(ProductCollectionService.Events.UPDATED, {
-          id: productCollection.id,
-        })
-
-      return productCollection
+      return collectionRepo.save(collection)
     })
   }
 
@@ -191,23 +162,17 @@ class ProductCollectionService extends TransactionBaseService {
    */
   async delete(collectionId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const productCollectionRepo = manager.withRepository(
+      const productCollectionRepo = manager.getCustomRepository(
         this.productCollectionRepository_
       )
 
-      const productCollection = await this.retrieve(collectionId)
+      const collection = await this.retrieve(collectionId)
 
-      if (!productCollection) {
+      if (!collection) {
         return Promise.resolve()
       }
 
-      await productCollectionRepo.softRemove(productCollection)
-
-      await this.eventBus_
-        .withTransaction(manager)
-        .emit(ProductCollectionService.Events.DELETED, {
-          id: productCollection.id,
-      })
+      await productCollectionRepo.softRemove(collection)
 
       return Promise.resolve()
     })
@@ -218,24 +183,15 @@ class ProductCollectionService extends TransactionBaseService {
     productIds: string[]
   ): Promise<ProductCollection> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
+      const productRepo = manager.getCustomRepository(this.productRepository_)
 
       const { id } = await this.retrieve(collectionId, { select: ["id"] })
 
       await productRepo.bulkAddToCollection(productIds, id)
 
-      const productCollection = await this.retrieve(id, {
+      return await this.retrieve(id, {
         relations: ["products"],
       })
-
-      await this.eventBus_
-        .withTransaction(manager)
-        .emit(ProductCollectionService.Events.PRODUCTS_ADDED, {
-          productCollection: productCollection,
-          productIds: productIds, 
-        })
-
-      return productCollection
     })
   }
 
@@ -244,22 +200,11 @@ class ProductCollectionService extends TransactionBaseService {
     productIds: string[]
   ): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
+      const productRepo = manager.getCustomRepository(this.productRepository_)
 
       const { id } = await this.retrieve(collectionId, { select: ["id"] })
 
       await productRepo.bulkRemoveFromCollection(productIds, id)
-
-      const productCollection = await this.retrieve(id, {
-        relations: ["products"],
-      })
-
-      await this.eventBus_
-        .withTransaction(manager)
-        .emit(ProductCollectionService.Events.PRODUCTS_REMOVED, {
-          productCollection: productCollection,
-          productIds: productIds, 
-        })
 
       return Promise.resolve()
     })
@@ -289,10 +234,13 @@ class ProductCollectionService extends TransactionBaseService {
    * @return the result of the find operation
    */
   async listAndCount(
-    selector: ListAndCountSelector = {},
+    selector: Selector<ProductCollection> & {
+      q?: string
+      discount_condition_id?: string
+    } = {},
     config: FindConfig<ProductCollection> = { skip: 0, take: 20 }
   ): Promise<[ProductCollection[], number]> {
-    const productCollectionRepo = this.activeManager_.withRepository(
+    const productCollectionRepo = this.manager_.getCustomRepository(
       this.productCollectionRepository_
     )
 
@@ -302,35 +250,31 @@ class ProductCollectionService extends TransactionBaseService {
       delete selector.q
     }
 
-    const query = buildQuery(
-      selector,
-      config
-    ) as FindManyOptions<ProductCollection> & {
-      where: { discount_condition_id?: string }
-    } & ExtendedFindConfig<ProductCollection>
+    const query = buildQuery(selector, config)
 
     if (q) {
-      const where = query.where as FindOptionsWhere<ProductCollection>
+      const where = query.where
 
       delete where.title
       delete where.handle
       delete where.created_at
       delete where.updated_at
 
-      query.where = [
-        {
-          ...where,
-          title: ILike(`%${q}%`),
-        },
-        {
-          ...where,
-          handle: ILike(`%${q}%`),
-        },
-      ]
+      query.where = (qb): void => {
+        qb.where(where)
+
+        qb.andWhere(
+          new Brackets((qb) => {
+            qb.where({ title: ILike(`%${q}%`) }).orWhere({
+              handle: ILike(`%${q}%`),
+            })
+          })
+        )
+      }
     }
 
     if (query.where.discount_condition_id) {
-      const discountConditionId = query.where.discount_condition_id
+      const discountConditionId = query.where.discount_condition_id as string
       delete query.where.discount_condition_id
       return await productCollectionRepo.findAndCountByDiscountConditionId(
         discountConditionId,

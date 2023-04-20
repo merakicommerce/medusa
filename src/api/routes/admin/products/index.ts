@@ -17,10 +17,6 @@ export default (app, featureFlagRouter: FlagRouter) => {
     defaultAdminProductRelations.push("sales_channels")
   }
 
-  if (featureFlagRouter.isFeatureEnabled("product_categories")) {
-    defaultAdminProductRelations.push("categories")
-  }
-
   route.post(
     "/",
     validateSalesChannelsExist((req) => req.body?.sales_channels),
@@ -104,6 +100,7 @@ export const defaultAdminProductRelations = [
   "tags",
   "type",
   "collection",
+  "categories",
 ]
 
 export const defaultAdminProductFields: (keyof Product)[] = [
@@ -139,22 +136,6 @@ export const defaultAdminGetProductsVariantsFields = ["id", "product_id"]
 /**
  * @schema AdminProductsDeleteOptionRes
  * type: object
- * x-expanded-relations:
- *   field: product
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - option_id
- *   - object
- *   - deleted
- *   - product
  * properties:
  *   option_id:
  *     type: string
@@ -168,7 +149,7 @@ export const defaultAdminGetProductsVariantsFields = ["id", "product_id"]
  *     description: Whether or not the items were deleted.
  *     default: true
  *   product:
- *     $ref: "#/components/schemas/PricedProduct"
+ *     $ref: "#/components/schemas/Product"
  */
 export type AdminProductsDeleteOptionRes = {
   option_id: string
@@ -180,22 +161,6 @@ export type AdminProductsDeleteOptionRes = {
 /**
  * @schema AdminProductsDeleteVariantRes
  * type: object
- * x-expanded-relations:
- *   field: product
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - variant_id
- *   - object
- *   - deleted
- *   - product
  * properties:
  *   variant_id:
  *     type: string
@@ -209,7 +174,7 @@ export type AdminProductsDeleteOptionRes = {
  *     description: Whether or not the items were deleted.
  *     default: true
  *   product:
- *     $ref: "#/components/schemas/PricedProduct"
+ *     $ref: "#/components/schemas/Product"
  */
 export type AdminProductsDeleteVariantRes = {
   variant_id: string
@@ -221,10 +186,6 @@ export type AdminProductsDeleteVariantRes = {
 /**
  * @schema AdminProductsDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -247,27 +208,13 @@ export type AdminProductsDeleteRes = {
 /**
  * @schema AdminProductsListRes
  * type: object
- * x-expanded-relations:
- *   field: products
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - products
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   products:
  *     type: array
  *     items:
- *       $ref: "#/components/schemas/PricedProduct"
+ *       oneOf:
+ *         - $ref: "#/components/schemas/Product"
+ *         - $ref: "#/components/schemas/PricedProduct"
  *   count:
  *     type: integer
  *     description: The total number of items available
@@ -285,11 +232,6 @@ export type AdminProductsListRes = PaginatedResponse & {
 /**
  * @schema AdminProductsListVariantsRes
  * type: object
- * required:
- *   - variants
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   variants:
  *     type: array
@@ -312,8 +254,6 @@ export type AdminProductsListVariantsRes = PaginatedResponse & {
 /**
  * @schema AdminProductsListTypesRes
  * type: object
- * required:
- *   - types
  * properties:
  *   types:
  *     type: array
@@ -327,17 +267,11 @@ export type AdminProductsListTypesRes = {
 /**
  * @schema AdminProductsListTagsRes
  * type: object
- * required:
- *   - tags
  * properties:
  *   tags:
  *     type: array
  *     items:
  *       type: object
- *       required:
- *         - id
- *         - usage_count
- *         - value
  *       properties:
  *         id:
  *           description: The ID of the tag.
@@ -360,22 +294,9 @@ export type AdminProductsListTagsRes = {
 /**
  * @schema AdminProductsRes
  * type: object
- * x-expanded-relations:
- *   field: product
- *   relations:
- *     - collection
- *     - images
- *     - options
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- *     - variants.prices
- * required:
- *   - product
  * properties:
  *   product:
- *     $ref: "#/components/schemas/PricedProduct"
+ *     $ref: "#/components/schemas/Product"
  */
 export type AdminProductsRes = {
   product: Product

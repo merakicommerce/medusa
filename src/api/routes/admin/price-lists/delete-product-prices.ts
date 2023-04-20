@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm"
 import PriceListService from "../../../../services/price-list"
 
 /**
- * @oas [delete] /admin/price-lists/{id}/products/{product_id}/prices
+ * @oas [delete] /price-lists/{id}/products/{product_id}/prices
  * operationId: "DeletePriceListsPriceListProductsProductPrices"
  * summary: "Delete Product's Prices"
  * description: "Delete all the prices related to a specific product in a price list"
@@ -32,7 +32,7 @@ import PriceListService from "../../../../services/price-list"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Price Lists
+ *   - Price List
  * responses:
  *   200:
  *     description: OK

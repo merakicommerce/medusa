@@ -1,5 +1,7 @@
 import { Router } from "express"
 
+import { isFeatureFlagEnabled } from "../../../middlewares/feature-flag-enabled"
+import PublishableAPIKeysFeatureFlag from "../../../../loaders/feature-flags/publishable-api-keys"
 import middlewares, {
   transformBody,
   transformQuery,
@@ -16,7 +18,11 @@ import { GetPublishableApiKeySalesChannelsParams } from "./list-publishable-api-
 const route = Router()
 
 export default (app) => {
-  app.use("/publishable-api-keys", route)
+  app.use(
+    "/publishable-api-keys",
+    isFeatureFlagEnabled(PublishableAPIKeysFeatureFlag.key),
+    route
+  )
 
   route.post(
     "/",
@@ -77,8 +83,6 @@ export default (app) => {
 /**
  * @schema AdminPublishableApiKeysRes
  * type: object
- * required:
- *   - publishable_api_key
  * properties:
  *   publishable_api_key:
  *     $ref: "#/components/schemas/PublishableApiKey"
@@ -90,11 +94,6 @@ export type AdminPublishableApiKeysRes = {
 /**
  * @schema AdminPublishableApiKeysListRes
  * type: object
- * required:
- *   - publishable_api_keys
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   publishable_api_keys:
  *     type: array
@@ -117,10 +116,6 @@ export type AdminPublishableApiKeysListRes = PaginatedResponse & {
 /**
  * @schema AdminPublishableApiKeyDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -139,8 +134,6 @@ export type AdminPublishableApiKeyDeleteRes = DeleteResponse
 /**
  * @schema AdminPublishableApiKeysListSalesChannelsRes
  * type: object
- * required:
- *   - sales_channels
  * properties:
  *   sales_channels:
  *     type: array

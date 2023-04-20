@@ -1,8 +1,3 @@
-import {
-  moduleHelper,
-  moduleLoader,
-  registerModules,
-} from "@medusajs/modules-sdk"
 import { asValue, createContainer } from "awilix"
 import express from "express"
 import jwt from "jsonwebtoken"
@@ -12,11 +7,13 @@ import "reflect-metadata"
 import supertest from "supertest"
 import apiLoader from "../loaders/api"
 import featureFlagLoader, { featureFlagRouter } from "../loaders/feature-flags"
-import models from "../loaders/models"
+import moduleLoader, { moduleHelper } from "../loaders/module"
 import passportLoader from "../loaders/passport"
-import repositories from "../loaders/repositories"
 import servicesLoader from "../loaders/services"
 import strategiesLoader from "../loaders/strategies"
+import registerModuleDefinitions from "../loaders/module-definitions"
+import repositories from "../loaders/repositories"
+import models from "../loaders/models"
 
 const adminSessionOpts = {
   cookieName: "session",
@@ -30,7 +27,7 @@ const clientSessionOpts = {
   secret: "test",
 }
 
-const moduleResolutions = registerModules({})
+const moduleResolutions = registerModuleDefinitions({})
 const config = {
   projectConfig: {
     jwt_secret: "supersecret",
@@ -38,6 +35,7 @@ const config = {
     admin_cors: "",
     store_cors: "",
   },
+  moduleResolutions,
 }
 
 const testApp = express()
@@ -97,7 +95,7 @@ repositories({ container, isTest: true })
 servicesLoader({ container, configModule: config })
 strategiesLoader({ container, configModule: config })
 passportLoader({ app: testApp, container, configModule: config })
-moduleLoader({ container, moduleResolutions })
+moduleLoader({ container, configModule: config })
 
 testApp.use((req, res, next) => {
   req.scope = container.createScope()

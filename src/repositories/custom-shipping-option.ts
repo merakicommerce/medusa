@@ -1,6 +1,6 @@
-import { CustomShippingOption } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { CustomShippingOption } from "./../models/custom-shipping-option"
 
-export const CustomShippingOptionRepository =
-  dataSource.getRepository(CustomShippingOption)
-export default CustomShippingOptionRepository
+@EntityRepository(CustomShippingOption)
+// eslint-disable-next-line max-len
+export class CustomShippingOptionRepository extends Repository<CustomShippingOption> {}

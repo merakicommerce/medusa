@@ -4,10 +4,9 @@ import jwt, { JwtPayload } from "jsonwebtoken"
 import CustomerService from "../../../../services/customer"
 import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
-import { MedusaError } from "medusa-core-utils"
 
 /**
- * @oas [post] /store/customers/password-reset
+ * @oas [post] /customers/password-reset
  * operationId: PostCustomersResetPassword
  * summary: Reset Password
  * description: "Resets a Customer's password using a password token created by a previous /password-token request."
@@ -43,14 +42,14 @@ import { MedusaError } from "medusa-core-utils"
  *           "token": "supersecrettoken"
  *       }'
  * tags:
- *   - Customers
+ *   - Customer
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/StoreCustomersResetPasswordRes"
+ *           $ref: "#/components/schemas/StoreCustomersRes"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":
@@ -71,25 +70,20 @@ export default async (req, res) => {
   )) as StorePostCustomersResetPasswordReq
 
   const customerService: CustomerService = req.scope.resolve("customerService")
-  let customer
-
-  customer = await customerService
-    .retrieveRegisteredByEmail(validated.email, {
+  let customer = await customerService.retrieveRegisteredByEmail(
+    validated.email,
+    {
       select: ["id", "password_hash"],
-    })
-    .catch(() => undefined)
+    }
+  )
 
-  const decodedToken = customer
-    ? jwt.verify(validated.token, customer.password_hash)
-    : undefined
-  if (
-    !decodedToken ||
-    customer.id !== (decodedToken as JwtPayload)?.customer_id
-  ) {
-    throw new MedusaError(
-      MedusaError.Types.UNAUTHORIZED,
-      "Invalid or expired password reset token"
-    )
+  const decodedToken = jwt.verify(
+    validated.token,
+    customer.password_hash
+  ) as JwtPayload
+  if (!decodedToken || customer.id !== decodedToken.customer_id) {
+    res.status(401).send("Invalid or expired password reset token")
+    return
   }
 
   const manager: EntityManager = req.scope.resolve("manager")

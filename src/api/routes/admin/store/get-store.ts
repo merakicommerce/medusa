@@ -1,15 +1,16 @@
-import { ModulesHelper } from "@medusajs/modules-sdk"
-import { defaultRelationsExtended } from "."
+import { FulfillmentProvider, PaymentProvider, Store } from "../../../../models"
 import {
   FulfillmentProviderService,
   PaymentProviderService,
   StoreService,
 } from "../../../../services"
-import { ExtendedStoreDTO } from "../../../../types/store"
+import { FeatureFlagsResponse } from "../../../../types/feature-flags"
+import { ModulesResponse } from "../../../../types/modules"
 import { FlagRouter } from "../../../../utils/flag-router"
+import { ModulesHelper } from "../../../../utils/module-helper"
 
 /**
- * @oas [get] /admin/store
+ * @oas [get] /store
  * operationId: "GetStore"
  * summary: "Get Store details"
  * description: "Retrieves the Store details"
@@ -43,7 +44,7 @@ import { FlagRouter } from "../../../../utils/flag-router"
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminExtendedStoresRes"
+ *           $ref: "#/components/schemas/AdminStoresRes"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":
@@ -69,14 +70,19 @@ export default async (req, res) => {
   const fulfillmentProviderService: FulfillmentProviderService =
     req.scope.resolve("fulfillmentProviderService")
 
-  const relations = [...defaultRelationsExtended]
+  const relations = ["currencies", "default_currency"]
   if (featureFlagRouter.isFeatureEnabled("sales_channels")) {
     relations.push("default_sales_channel")
   }
 
   const data = (await storeService.retrieve({
     relations,
-  })) as ExtendedStoreDTO
+  })) as Store & {
+    payment_providers: PaymentProvider[]
+    fulfillment_providers: FulfillmentProvider[]
+    feature_flags: FeatureFlagsResponse
+    modules: ModulesResponse
+  }
 
   data.feature_flags = featureFlagRouter.listFlags()
   data.modules = modulesHelper.modules

@@ -42,16 +42,20 @@ class ShippingProfileService extends TransactionBaseService {
   protected readonly shippingProfileRepository_: typeof ShippingProfileRepository
   protected readonly productRepository_: typeof ProductRepository
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   constructor({
+    manager,
     shippingProfileRepository,
     productService,
     productRepository,
     shippingOptionService,
     customShippingOptionService,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.shippingProfileRepository_ = shippingProfileRepository
     this.productService_ = productService
     this.productRepository_ = productRepository
@@ -68,14 +72,11 @@ class ShippingProfileService extends TransactionBaseService {
     selector: Selector<ShippingProfile> = {},
     config: FindConfig<ShippingProfile> = { relations: [], skip: 0, take: 10 }
   ): Promise<ShippingProfile[]> {
-    const shippingProfileRepo = this.activeManager_.withRepository(
+    const shippingProfileRepo = this.manager_.getCustomRepository(
       this.shippingProfileRepository_
     )
 
-    const query = buildQuery<Selector<ShippingProfile>, ShippingProfile>(
-      selector,
-      config
-    )
+    const query = buildQuery(selector, config)
     return shippingProfileRepo.find(query)
   }
 
@@ -142,7 +143,7 @@ class ShippingProfileService extends TransactionBaseService {
       )
     }
 
-    const profileRepository = this.activeManager_.withRepository(
+    const profileRepository = this.manager_.getCustomRepository(
       this.shippingProfileRepository_
     )
 
@@ -160,13 +161,13 @@ class ShippingProfileService extends TransactionBaseService {
     return profile
   }
 
-  async retrieveDefault(): Promise<ShippingProfile | null> {
-    const profileRepository = this.activeManager_.withRepository(
+  async retrieveDefault(): Promise<ShippingProfile | undefined> {
+    const profileRepository = this.manager_.getCustomRepository(
       this.shippingProfileRepository_
     )
 
     const profile = await profileRepository.findOne({
-      where: { type: ShippingProfileType.DEFAULT },
+      where: { type: "default" },
     })
 
     return profile
@@ -181,7 +182,7 @@ class ShippingProfileService extends TransactionBaseService {
       let profile = await this.retrieveDefault()
 
       if (!profile) {
-        const profileRepository = manager.withRepository(
+        const profileRepository = manager.getCustomRepository(
           this.shippingProfileRepository_
         )
 
@@ -203,13 +204,13 @@ class ShippingProfileService extends TransactionBaseService {
    * Retrieves the default gift card profile
    * @return the shipping profile for gift cards
    */
-  async retrieveGiftCardDefault(): Promise<ShippingProfile | null> {
-    const profileRepository = this.activeManager_.withRepository(
+  async retrieveGiftCardDefault(): Promise<ShippingProfile | undefined> {
+    const profileRepository = this.manager_.getCustomRepository(
       this.shippingProfileRepository_
     )
 
     const giftCardProfile = await profileRepository.findOne({
-      where: { type: ShippingProfileType.GIFT_CARD },
+      where: { type: "gift_card" },
     })
 
     return giftCardProfile
@@ -225,7 +226,7 @@ class ShippingProfileService extends TransactionBaseService {
       let profile = await this.retrieveGiftCardDefault()
 
       if (!profile) {
-        const profileRepository = manager.withRepository(
+        const profileRepository = manager.getCustomRepository(
           this.shippingProfileRepository_
         )
 
@@ -248,7 +249,7 @@ class ShippingProfileService extends TransactionBaseService {
    */
   async create(profile: CreateShippingProfile): Promise<ShippingProfile> {
     return await this.atomicPhase_(async (manager) => {
-      const profileRepository = manager.withRepository(
+      const profileRepository = manager.getCustomRepository(
         this.shippingProfileRepository_
       )
 
@@ -286,7 +287,7 @@ class ShippingProfileService extends TransactionBaseService {
     update: UpdateShippingProfile
   ): Promise<ShippingProfile> {
     return await this.atomicPhase_(async (manager) => {
-      const profileRepository = manager.withRepository(
+      const profileRepository = manager.getCustomRepository(
         this.shippingProfileRepository_
       )
 
@@ -329,7 +330,7 @@ class ShippingProfileService extends TransactionBaseService {
    */
   async delete(profileId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const profileRepo = manager.withRepository(
+      const profileRepo = manager.getCustomRepository(
         this.shippingProfileRepository_
       )
 

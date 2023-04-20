@@ -1,7 +1,7 @@
 import NoteService from "../../../../services/note"
 
 /**
- * @oas [get] /admin/notes/{id}
+ * @oas [get] /notes/{id}
  * operationId: "GetNotesNote"
  * summary: "Get a Note"
  * description: "Retrieves a single note using its id"
@@ -30,7 +30,7 @@ import NoteService from "../../../../services/note"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Notes
+ *   - Note
  * responses:
  *   200:
  *     description: OK

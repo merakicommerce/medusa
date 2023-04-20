@@ -34,11 +34,6 @@ export const defaultAdminProductTagsRelations = []
 /**
  * @schema AdminProductTagsListRes
  * type: object
- * required:
- *   - product_tags
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   product_tags:
  *     type: array

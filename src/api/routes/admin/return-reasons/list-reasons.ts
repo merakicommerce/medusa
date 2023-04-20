@@ -7,7 +7,7 @@ import { ReturnReasonService } from "../../../../services"
 import { Selector } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/return-reasons
+ * @oas [get] /return-reasons
  * operationId: "GetReturnReasons"
  * summary: "List Return Reasons"
  * description: "Retrieves a list of Return Reasons."
@@ -34,7 +34,7 @@ import { Selector } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Return Reasons
+ *   - Return Reason
  * responses:
  *   200:
  *     description: OK

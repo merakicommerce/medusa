@@ -4,7 +4,7 @@ import { sync as existsSync } from "fs-exists-cached"
 import { getConfigFile } from "medusa-core-utils"
 import { track } from "medusa-telemetry"
 import path from "path"
-import { DataSource, DataSourceOptions } from "typeorm"
+import { ConnectionOptions, createConnection } from "typeorm"
 
 import loaders from "../loaders"
 import { handleConfigError } from "../loaders/config"
@@ -13,7 +13,6 @@ import Logger from "../loaders/logger"
 import featureFlagLoader from "../loaders/feature-flags"
 
 import {
-  ProductCategoryService,
   ProductService,
   ProductVariantService,
   RegionService,
@@ -24,7 +23,6 @@ import {
 } from "../services"
 import { ConfigModule } from "../types/global"
 import { CreateProductInput } from "../types/product"
-import { CreateProductCategoryInput } from "../types/product-category"
 import getMigrations, { getModuleSharedResources } from "./utils/get-migrations"
 
 type SeedOptions = {
@@ -75,14 +73,12 @@ const seed = async function ({ directory, migrate, seedFile }: SeedOptions) {
       extra: configModule.projectConfig.database_extra || {},
       migrations: coreMigrations.concat(moduleMigrations),
       logging: true,
-    } as DataSourceOptions
+    } as ConnectionOptions
 
-    const connection = new DataSource(connectionOptions)
+    const connection = await createConnection(connectionOptions)
 
-    await connection.initialize()
     await connection.runMigrations()
-    await connection.destroy()
-
+    await connection.close()
     Logger.info("Migrations completed.")
   }
 
@@ -99,10 +95,6 @@ const seed = async function ({ directory, migrate, seedFile }: SeedOptions) {
   const userService: UserService = container.resolve("userService")
   const regionService: RegionService = container.resolve("regionService")
   const productService: ProductService = container.resolve("productService")
-  const productCategoryService: ProductCategoryService = container.resolve(
-    "productCategoryService"
-  )
-
   /* eslint-disable */
   const productVariantService: ProductVariantService = container.resolve(
     "productVariantService"
@@ -120,7 +112,6 @@ const seed = async function ({ directory, migrate, seedFile }: SeedOptions) {
       store: seededStore,
       regions,
       products,
-      categories = [],
       shipping_options,
       users,
     } = JSON.parse(fs.readFileSync(resolvedPath, `utf-8`))
@@ -207,35 +198,6 @@ const seed = async function ({ directory, migrate, seedFile }: SeedOptions) {
             .withTransaction(tx)
             .create(newProd.id, variant)
         }
-      }
-    }
-
-    const createProductCategory = async (
-      parameters,
-      parentCategoryId: string | null = null
-    ) => {
-      // default to the categories being visible and public
-      parameters.is_active = parameters.is_active || true
-      parameters.is_internal = parameters.is_internal || false
-      parameters.parent_category_id = parentCategoryId
-
-      const categoryChildren = parameters.category_children || []
-      delete parameters.category_children
-
-      const category = await productCategoryService
-        .withTransaction(tx)
-        .create(parameters as CreateProductCategoryInput)
-
-      if (categoryChildren.length) {
-        for (const categoryChild of categoryChildren) {
-          await createProductCategory(categoryChild, category.id)
-        }
-      }
-    }
-
-    if (dbType !== "sqlite") {
-      for (const c of categories) {
-        await createProductCategory(c, null)
       }
     }
   })

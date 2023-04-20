@@ -5,7 +5,7 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/notes
+ * @oas [post] /notes
  * operationId: "PostNotes"
  * summary: "Creates a Note"
  * description: "Creates a Note which can be associated with any resource as required."
@@ -47,7 +47,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Notes
+ *   - Note
  * responses:
  *   200:
  *     description: OK

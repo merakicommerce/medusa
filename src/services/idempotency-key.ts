@@ -1,16 +1,13 @@
+import { isDefined, MedusaError } from "medusa-core-utils"
+import { v4 } from "uuid"
+import { TransactionBaseService } from "../interfaces"
+import { DeepPartial, EntityManager } from "typeorm"
+import { IdempotencyKeyRepository } from "../repositories/idempotency-key"
+import { IdempotencyKey } from "../models"
 import {
   CreateIdempotencyKeyInput,
   IdempotencyCallbackResult,
 } from "../types/idempotency-key"
-import { DeepPartial, EntityManager } from "typeorm"
-import { MedusaError, isDefined } from "medusa-core-utils"
-import { buildQuery, isString } from "../utils"
-
-import { IdempotencyKey } from "../models"
-import { IdempotencyKeyRepository } from "../repositories/idempotency-key"
-import { Selector } from "../types/common"
-import { TransactionBaseService } from "../interfaces"
-import { v4 } from "uuid"
 
 const KEY_LOCKED_TIMEOUT = 1000
 
@@ -20,12 +17,16 @@ type InjectedDependencies = {
 }
 
 class IdempotencyKeyService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly idempotencyKeyRepository_: typeof IdempotencyKeyRepository
 
-  constructor({ idempotencyKeyRepository }: InjectedDependencies) {
+  constructor({ manager, idempotencyKeyRepository }: InjectedDependencies) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.idempotencyKeyRepository_ = idempotencyKeyRepository
   }
 
@@ -44,11 +45,9 @@ class IdempotencyKeyService extends TransactionBaseService {
     reqPath: string
   ): Promise<IdempotencyKey> {
     return await this.atomicPhase_(async () => {
-      if (headerKey) {
-        const key = await this.retrieve(headerKey).catch(() => void 0)
-        if (key) {
-          return key
-        }
+      const key = await this.retrieve(headerKey).catch(() => void 0)
+      if (key) {
+        return key
       }
       return await this.create({
         request_method: reqMethod,
@@ -67,7 +66,7 @@ class IdempotencyKeyService extends TransactionBaseService {
    */
   async create(payload: CreateIdempotencyKeyInput): Promise<IdempotencyKey> {
     return await this.atomicPhase_(async (manager) => {
-      const idempotencyKeyRepo = manager.withRepository(
+      const idempotencyKeyRepo = manager.getCustomRepository(
         this.idempotencyKeyRepository_
       )
 
@@ -80,51 +79,30 @@ class IdempotencyKeyService extends TransactionBaseService {
 
   /**
    * Retrieves an idempotency key
-   * @param idempotencyKeyOrSelector - key or selector to retrieve
+   * @param idempotencyKey - key to retrieve
    * @return idempotency key
    */
-  async retrieve(
-    idempotencyKeyOrSelector: string | Selector<IdempotencyKey>
-  ): Promise<IdempotencyKey | never> {
-    if (!isDefined(idempotencyKeyOrSelector)) {
+  async retrieve(idempotencyKey: string): Promise<IdempotencyKey | never> {
+    if (!isDefined(idempotencyKey)) {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
-        `"idempotencyKeyOrSelector" must be defined`
+        `"idempotencyKey" must be defined`
       )
     }
 
-    const idempotencyKeyRepo = this.activeManager_.withRepository(
+    const idempotencyKeyRepo = this.manager_.getCustomRepository(
       this.idempotencyKeyRepository_
     )
 
-    const selector = isString(idempotencyKeyOrSelector)
-      ? { idempotency_key: idempotencyKeyOrSelector }
-      : idempotencyKeyOrSelector
-    const query = buildQuery(selector)
-
-    const iKeys = await idempotencyKeyRepo.find(query)
-
-    if (iKeys.length > 1) {
-      throw new Error(
-        `Multiple keys were found for constraints: ${JSON.stringify(
-          idempotencyKeyOrSelector
-        )}. There should only be one.`
-      )
-    }
-
-    const iKey = iKeys[0]
+    const iKey = await idempotencyKeyRepo.findOne({
+      where: { idempotency_key: idempotencyKey },
+    })
 
     if (!iKey) {
-      let message
-      if (isString(idempotencyKeyOrSelector)) {
-        message = `Idempotency key ${idempotencyKeyOrSelector} was not found`
-      } else {
-        message = `Idempotency key with constraints ${JSON.stringify(
-          idempotencyKeyOrSelector
-        )} was not found`
-      }
-
-      throw new MedusaError(MedusaError.Types.NOT_FOUND, message)
+      throw new MedusaError(
+        MedusaError.Types.NOT_FOUND,
+        `Idempotency key ${idempotencyKey} was not found`
+      )
     }
 
     return iKey
@@ -137,7 +115,7 @@ class IdempotencyKeyService extends TransactionBaseService {
    */
   async lock(idempotencyKey: string): Promise<IdempotencyKey | never> {
     return await this.atomicPhase_(async (manager) => {
-      const idempotencyKeyRepo = manager.withRepository(
+      const idempotencyKeyRepo = manager.getCustomRepository(
         this.idempotencyKeyRepository_
       )
 
@@ -169,7 +147,7 @@ class IdempotencyKeyService extends TransactionBaseService {
     update: DeepPartial<IdempotencyKey>
   ): Promise<IdempotencyKey> {
     return await this.atomicPhase_(async (manager) => {
-      const idempotencyKeyRepo = manager.withRepository(
+      const idempotencyKeyRepo = manager.getCustomRepository(
         this.idempotencyKeyRepository_
       )
 

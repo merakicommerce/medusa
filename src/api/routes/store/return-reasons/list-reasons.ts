@@ -5,7 +5,7 @@ import {
 import ReturnReasonService from "../../../../services/return-reason"
 
 /**
- * @oas [get] /store/return-reasons
+ * @oas [get] /return-reasons
  * operationId: "GetReturnReasons"
  * summary: "List Return Reasons"
  * description: "Retrieves a list of Return Reasons."
@@ -26,7 +26,7 @@ import ReturnReasonService from "../../../../services/return-reason"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/return-reasons'
  * tags:
- *   - Return Reasons
+ *   - Return Reason
  * responses:
  *   200:
  *     description: OK

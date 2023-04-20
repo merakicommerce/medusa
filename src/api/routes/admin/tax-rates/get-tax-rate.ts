@@ -6,7 +6,7 @@ import { TaxRateService } from "../../../../services"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [get] /admin/tax-rates/{id}
+ * @oas [get] /tax-rates/{id}
  * operationId: "GetTaxRatesTaxRate"
  * summary: "Get a Tax Rate"
  * description: "Retrieves a TaxRate"
@@ -54,7 +54,7 @@ import { validator } from "../../../../utils/validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Tax Rates
+ *   - Tax Rate
  * responses:
  *   200:
  *     description: OK

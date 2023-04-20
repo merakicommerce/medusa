@@ -6,7 +6,7 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/invites
+ * @oas [post] /invites
  * operationId: "PostInvites"
  * summary: "Create an Invite"
  * description: "Creates an Invite and triggers an 'invite' created event"
@@ -49,7 +49,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Invites
+ *   - Invite
  * responses:
  *   200:
  *     description: OK

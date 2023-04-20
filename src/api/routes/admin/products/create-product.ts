@@ -18,8 +18,8 @@ import {
   ShippingProfileService,
 } from "../../../../services"
 import {
-  ProductProductCategoryReq,
   ProductSalesChannelReq,
+  ProductProductCategoryReq,
   ProductTagReq,
   ProductTypeReq,
 } from "../../../../types/product"
@@ -28,23 +28,24 @@ import {
   ProductVariantPricesCreateReq,
 } from "../../../../types/product-variant"
 
-import { IInventoryService } from "@medusajs/types"
 import { Type } from "class-transformer"
 import { EntityManager } from "typeorm"
 import SalesChannelFeatureFlag from "../../../../loaders/feature-flags/sales-channels"
 import { ProductStatus } from "../../../../models"
-import { Logger } from "../../../../types/global"
 import { FeatureFlagDecorators } from "../../../../utils/feature-flag-decorators"
-import { FlagRouter } from "../../../../utils/flag-router"
-import { DistributedTransaction } from "../../../../utils/transaction"
 import { validator } from "../../../../utils/validator"
+import { IInventoryService } from "../../../../interfaces"
+
 import {
-  createVariantsTransaction,
+  createVariantTransaction,
   revertVariantTransaction,
 } from "./transaction/create-product-variant"
+import { DistributedTransaction } from "../../../../utils/transaction"
+import { Logger } from "../../../../types/global"
+import { FlagRouter } from "../../../../utils/flag-router"
 
 /**
- * @oas [post] /admin/products
+ * @oas [post] /products
  * operationId: "PostProducts"
  * summary: "Create a Product"
  * x-authenticated: true
@@ -84,7 +85,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -130,7 +131,7 @@ export default async (req, res) => {
 
   const entityManager: EntityManager = req.scope.resolve("manager")
 
-  const product = await entityManager.transaction(async (manager) => {
+  const newProduct = await entityManager.transaction(async (manager) => {
     const { variants } = validated
     delete validated.variants
 
@@ -185,25 +186,27 @@ export default async (req, res) => {
       }
 
       try {
-        const variantsInputData = variants.map((variant) => {
-          const options =
-            variant?.options?.map((option, index) => ({
-              ...option,
-              option_id: optionIds[index],
-            })) || []
+        await Promise.all(
+          variants.map(async (variant) => {
+            const options =
+              variant?.options?.map((option, index) => ({
+                ...option,
+                option_id: optionIds[index],
+              })) || []
 
-          return {
-            ...variant,
-            options,
-          } as CreateProductVariantInput
-        })
+            const input = {
+              ...variant,
+              options,
+            }
 
-        const varTransaction = await createVariantsTransaction(
-          transactionDependencies,
-          newProduct.id,
-          variantsInputData
+            const varTransation = await createVariantTransaction(
+              transactionDependencies,
+              newProduct.id,
+              input as CreateProductVariantInput
+            )
+            allVariantTransactions.push(varTransation)
+          })
         )
-        allVariantTransactions.push(varTransaction)
       } catch (e) {
         await Promise.all(
           allVariantTransactions.map(async (transaction) => {
@@ -218,19 +221,15 @@ export default async (req, res) => {
       }
     }
 
-    const rawProduct = await productService
-      .withTransaction(manager)
-      .retrieve(newProduct.id, {
-        select: defaultAdminProductFields,
-        relations: defaultAdminProductRelations,
-      })
-
-    const [product] = await pricingService
-      .withTransaction(manager)
-      .setProductPrices([rawProduct])
-
-    return product
+    return newProduct
   })
+
+  const rawProduct = await productService.retrieve(newProduct.id, {
+    select: defaultAdminProductFields,
+    relations: defaultAdminProductRelations,
+  })
+
+  const [product] = await pricingService.setProductPrices([rawProduct])
 
   res.json({ product })
 }

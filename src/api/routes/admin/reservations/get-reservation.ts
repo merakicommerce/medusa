@@ -1,11 +1,11 @@
-import { IInventoryService } from "@medusajs/types"
-import { MedusaError } from "@medusajs/utils"
+import { MedusaError } from "medusa-core-utils"
+import { IInventoryService } from "../../../../interfaces"
 
 /**
- * @oas [get] /admin/reservations/{id}
+ * @oas [get] /reservations/{id}
  * operationId: "GetReservationsReservation"
  * summary: "Get a Reservation"
- * description: "Retrieves a single reservation using its ID"
+ * description: "Retrieves a single reservation using its id"
  * x-authenticated: true
  * parameters:
  *   - (path) id=* {string} The ID of the reservation to retrieve.
@@ -16,7 +16,7 @@ import { MedusaError } from "@medusajs/utils"
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.reservations.retrieve(reservationId)
+ *       medusa.admin.reservations.retrieve(reservation_id)
  *       .then(({ reservation }) => {
  *         console.log(reservation.id);
  *       });
@@ -29,14 +29,14 @@ import { MedusaError } from "@medusajs/utils"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Reservations
+ *   - Reservation
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminReservationsRes"
+ *           $ref: "#/components/schemas/AdminPostReservationsReq"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":

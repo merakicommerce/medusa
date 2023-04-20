@@ -7,7 +7,7 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/users
+ * @oas [post] /users
  * operationId: "PostUsers"
  * summary: "Create a User"
  * description: "Creates a User"
@@ -47,7 +47,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Users
+ *   - User
  * responses:
  *   200:
  *     description: OK

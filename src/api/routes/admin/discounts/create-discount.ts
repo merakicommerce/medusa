@@ -26,7 +26,7 @@ import { Request, Response } from "express"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [post] /admin/discounts
+ * @oas [post] /discounts
  * operationId: "PostDiscounts"
  * summary: "Creates a Discount"
  * x-authenticated: true
@@ -83,7 +83,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount
  * responses:
  *   200:
  *     description: OK

@@ -9,10 +9,12 @@ import { Type } from "class-transformer"
 
 import { OrderService } from "../../../../services"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
+
+import { defaultStoreOrdersFields, defaultStoreOrdersRelations } from "."
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [get] /store/orders
+ * @oas [get] /orders
  * operationId: "GetOrders"
  * summary: "Look Up an Order"
  * description: "Look up an order using filters."
@@ -61,7 +63,7 @@ import { FindParams } from "../../../../types/common"
  *     source: |
  *       curl --location --request GET 'https://medusa-url.com/store/orders?display_id=1&email=user@example.com'
  * tags:
- *   - Orders
+ *   - Order
  * responses:
  *   200:
  *     description: OK
@@ -100,9 +102,7 @@ export default async (req, res) => {
 
   const order = orders[0]
 
-  res.json({
-    order: cleanResponseData(order, req.allowedProperties || []),
-  })
+  res.json({ order: cleanResponseData(order, req.allowedProperties || []) })
 }
 
 export class ShippingAddressPayload {

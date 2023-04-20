@@ -6,7 +6,7 @@ import middlewares, {
 } from "../../../middlewares"
 
 import { PaymentCollection } from "../../../../models"
-import { AdminGetPaymentCollectionsParams } from "./get-payment-collection"
+import { GetPaymentCollectionsParams } from "./get-payment-collection"
 import { AdminUpdatePaymentCollectionsReq } from "./update-payment-collection"
 
 const route = Router()
@@ -16,7 +16,7 @@ export default (app, container) => {
 
   route.get(
     "/:id",
-    transformQuery(AdminGetPaymentCollectionsParams, {
+    transformQuery(GetPaymentCollectionsParams, {
       defaultFields: defaultPaymentCollectionFields,
       defaultRelations: defaulPaymentCollectionRelations,
       isList: false,
@@ -65,17 +65,6 @@ export const defaulPaymentCollectionRelations = [
 /**
  * @schema AdminPaymentCollectionsRes
  * type: object
- * x-expanded-relations:
- *   field: payment_collection
- *   relations:
- *     - payment_sessions
- *     - payments
- *     - region
- *   eager:
- *     - region.fulfillment_providers
- *     - region.payment_providers
- * required:
- *   - payment_collection
  * properties:
  *   payment_collection:
  *     $ref: "#/components/schemas/PaymentCollection"
@@ -87,10 +76,6 @@ export type AdminPaymentCollectionsRes = {
 /**
  * @schema AdminPaymentCollectionDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string

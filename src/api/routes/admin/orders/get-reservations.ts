@@ -1,19 +1,29 @@
-import { IInventoryService } from "@medusajs/types"
 import { Request, Response } from "express"
+import { IInventoryService } from "../../../../interfaces"
 import { OrderService } from "../../../../services"
 import { extendedFindParamsMixin } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/orders/{id}/reservations
+ * @oas [get] /orders/{id}/reservations
  * operationId: "GetOrdersOrderReservations"
- * summary: "Get reservations of an Order"
- * description: "Retrieves reservations of an Order"
+ * summary: "Get reservations for an Order"
+ * description: "Retrieves reservations for an Order"
  * x-authenticated: true
  * parameters:
  *   - (path) id=* {string} The ID of the Order.
  *   - (query) offset=0 {integer} How many reservations to skip before the results.
  *   - (query) limit=20 {integer} Limit the number of reservations returned.
  * x-codeSamples:
+ *   - lang: JavaScript
+ *     label: JS Client
+ *     source: |
+ *       import Medusa from "@medusajs/medusa-js"
+ *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
+ *       // must be previously logged in or use api token
+ *       medusa.admin.orders.retrieveReservations(order_id)
+ *       .then(({ reservations }) => {
+ *         console.log(reservations[0].id);
+ *       });
  *   - lang: Shell
  *     label: cURL
  *     source: |
@@ -23,14 +33,14 @@ import { extendedFindParamsMixin } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Orders
+ *   - Order
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminReservationsListRes"
+ *           $ref: "#/components/schemas/AdminGetReservationReservationsReq"
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":

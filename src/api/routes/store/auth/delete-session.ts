@@ -1,5 +1,5 @@
 /**
- * @oas [delete] /store/auth
+ * @oas [delete] /auth
  * operationId: "DeleteAuth"
  * summary: "Customer Log out"
  * description: "Destroys a Customer's authenticated session."

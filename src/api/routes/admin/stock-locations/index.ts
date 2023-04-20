@@ -1,24 +1,22 @@
-import {
-  DeleteResponse,
-  PaginatedResponse,
-  StockLocationTypes,
-} from "@medusajs/types"
 import { Router } from "express"
+import "reflect-metadata"
+import { DeleteResponse, PaginatedResponse } from "../../../../types/common"
+import { StockLocationDTO } from "../../../../types/stock-location"
 import middlewares, {
   transformBody,
   transformQuery,
 } from "../../../middlewares"
-import { checkRegisteredModules } from "../../../middlewares/check-registered-modules"
-import {
-  AdminPostStockLocationsParams,
-  AdminPostStockLocationsReq,
-} from "./create-stock-location"
-import { AdminGetStockLocationsLocationParams } from "./get-stock-location"
 import { AdminGetStockLocationsParams } from "./list-stock-locations"
+import { AdminGetStockLocationsLocationParams } from "./get-stock-location"
 import {
   AdminPostStockLocationsLocationParams,
   AdminPostStockLocationsLocationReq,
 } from "./update-stock-location"
+import {
+  AdminPostStockLocationsParams,
+  AdminPostStockLocationsReq,
+} from "./create-stock-location"
+import { checkRegisteredModules } from "../../../middlewares/check-registered-modules"
 
 const route = Router()
 
@@ -81,19 +79,20 @@ export default (app) => {
   return app
 }
 
-// eslint-disable-next-line max-len
-export const defaultAdminStockLocationFields: (keyof StockLocationTypes.StockLocationDTO)[] =
-  ["id", "name", "address_id", "metadata", "created_at", "updated_at"]
+export const defaultAdminStockLocationFields: (keyof StockLocationDTO)[] = [
+  "id",
+  "name",
+  "address_id",
+  "metadata",
+  "created_at",
+  "updated_at",
+]
 
 export const defaultAdminStockLocationRelations = []
 
 /**
  * @schema AdminStockLocationsDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -112,29 +111,22 @@ export type AdminStockLocationsDeleteRes = DeleteResponse
 /**
  * @schema AdminStockLocationsRes
  * type: object
- * required:
- *   - stock_location
  * properties:
  *   stock_location:
- *     $ref: "#/components/schemas/StockLocationExpandedDTO"
+ *     $ref: "#/components/schemas/StockLocationDTO"
  */
 export type AdminStockLocationsRes = {
-  stock_location: StockLocationTypes.StockLocationExpandedDTO
+  stock_location: StockLocationDTO
 }
 
 /**
  * @schema AdminStockLocationsListRes
  * type: object
- * required:
- *   - stock_locations
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   stock_locations:
  *     type: array
  *     items:
- *       $ref: "#/components/schemas/StockLocationExpandedDTO"
+ *       $ref: "#/components/schemas/StockLocationDTO"
  *   count:
  *     type: integer
  *     description: The total number of items available
@@ -146,10 +138,10 @@ export type AdminStockLocationsRes = {
  *     description: The number of items per page
  */
 export type AdminStockLocationsListRes = PaginatedResponse & {
-  stock_locations: StockLocationTypes.StockLocationExpandedDTO[]
+  stock_locations: StockLocationDTO[]
 }
 
-export * from "./create-stock-location"
-export * from "./get-stock-location"
 export * from "./list-stock-locations"
+export * from "./get-stock-location"
+export * from "./create-stock-location"
 export * from "./update-stock-location"

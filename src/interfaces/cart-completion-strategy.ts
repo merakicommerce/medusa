@@ -1,4 +1,3 @@
-import { TransactionBaseService } from "@medusajs/utils"
 import { IdempotencyKey } from "../models"
 import { RequestContext } from "../types/request"
 
@@ -27,7 +26,6 @@ export interface ICartCompletionStrategy {
 }
 
 export abstract class AbstractCartCompletionStrategy
-  extends TransactionBaseService
   implements ICartCompletionStrategy
 {
   abstract complete(

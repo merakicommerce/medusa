@@ -4,7 +4,7 @@ import { EntityManager } from "typeorm"
 import { SalesChannelService } from "../../../../services/"
 
 /**
- * @oas [delete] /admin/sales-channels/{id}
+ * @oas [delete] /sales-channels/{id}
  * operationId: "DeleteSalesChannelsSalesChannel"
  * summary: "Delete a Sales Channel"
  * description: "Deletes the sales channel."
@@ -33,7 +33,7 @@ import { SalesChannelService } from "../../../../services/"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Sales Channels
+ *   - Sales Channel
  * responses:
  *   200:
  *     description: OK

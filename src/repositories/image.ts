@@ -1,16 +1,16 @@
+import { EntityRepository, In, Repository } from "typeorm"
+import { Image } from "../models"
 import { QueryDeepPartialEntity } from "typeorm/query-builder/QueryPartialEntity"
 
-import { In } from "typeorm"
-import { dataSource } from "../loaders/database"
-import { Image } from "../models"
-
-export const ImageRepository = dataSource.getRepository(Image).extend({
+@EntityRepository(Image)
+export class ImageRepository extends Repository<Image> {
   async insertBulk(data: QueryDeepPartialEntity<Image>[]): Promise<Image[]> {
     const queryBuilder = this.createQueryBuilder()
       .insert()
       .into(Image)
       .values(data)
 
+    // TODO: remove if statement once this issue is resolved https://github.com/typeorm/typeorm/issues/9850
     if (!queryBuilder.connection.driver.isReturningSqlSupported("insert")) {
       const rawImages = await queryBuilder.execute()
       return rawImages.generatedMaps.map((d) => this.create(d)) as Image[]
@@ -18,9 +18,9 @@ export const ImageRepository = dataSource.getRepository(Image).extend({
 
     const rawImages = await queryBuilder.returning("*").execute()
     return rawImages.generatedMaps.map((d) => this.create(d))
-  },
+  }
 
-  async upsertImages(imageUrls: string[]) {
+  public async upsertImages(imageUrls: string[]) {
     const existingImages = await this.find({
       where: {
         url: In(imageUrls),
@@ -49,6 +49,5 @@ export const ImageRepository = dataSource.getRepository(Image).extend({
     }
 
     return upsertedImgs
-  },
-})
-export default ImageRepository
+  }
+}

@@ -3,7 +3,7 @@ import { OrderEditService } from "../../../../services"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/order-edits/{id}
+ * @oas [get] /order-edits/{id}
  * operationId: "GetOrderEditsOrderEdit"
  * summary: "Get an OrderEdit"
  * description: "Retrieves a OrderEdit."
@@ -35,7 +35,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK

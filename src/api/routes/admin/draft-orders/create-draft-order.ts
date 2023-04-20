@@ -28,7 +28,7 @@ import { IsType } from "../../../../utils/validators/is-type"
 import { cleanResponseData } from "../../../../utils/clean-response-data"
 
 /**
- * @oas [post] /admin/draft-orders
+ * @oas [post] /draft-orders
  * operationId: "PostDraftOrders"
  * summary: "Create a Draft Order"
  * description: "Creates a Draft Order"
@@ -88,7 +88,7 @@ import { cleanResponseData } from "../../../../utils/clean-response-data"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Draft Orders
+ *   - Draft Order
  * responses:
  *   200:
  *     description: OK
@@ -182,12 +182,12 @@ enum Status {
  *   billing_address:
  *     description: "The Address to be used for billing purposes."
  *     anyOf:
- *       - $ref: "#/components/schemas/AddressPayload"
+ *       - $ref: "#/components/schemas/AddressFields"
  *       - type: string
  *   shipping_address:
  *     description: "The Address to be used for shipping."
  *     anyOf:
- *       - $ref: "#/components/schemas/AddressPayload"
+ *       - $ref: "#/components/schemas/AddressFields"
  *       - type: string
  *   items:
  *     description: The Line Items that have been received.

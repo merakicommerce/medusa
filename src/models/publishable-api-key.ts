@@ -1,9 +1,12 @@
-import { BeforeInsert, Column, Entity } from "typeorm"
+import { BeforeInsert, Column } from "typeorm"
 
 import { BaseEntity } from "../interfaces"
-import { generateEntityId, resolveDbType } from "../utils"
+import { resolveDbType } from "../utils/db-aware-column"
+import { generateEntityId } from "../utils"
+import { FeatureFlagEntity } from "../utils/feature-flag-decorators"
+import PublishableAPIKeysFeatureFlag from "../loaders/feature-flags/publishable-api-keys"
 
-@Entity()
+@FeatureFlagEntity(PublishableAPIKeysFeatureFlag.key)
 export class PublishableApiKey extends BaseEntity {
   @Column({ type: "varchar", nullable: true })
   created_by: string | null

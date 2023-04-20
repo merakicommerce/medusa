@@ -1,11 +1,12 @@
-import { IStockLocationService } from "@medusajs/types"
+import { Request, Response } from "express"
 import { Type } from "class-transformer"
 import { IsObject, IsOptional, IsString, ValidateNested } from "class-validator"
-import { Request, Response } from "express"
+
+import { IStockLocationService } from "../../../../interfaces"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [post] /admin/stock-locations/{id}
+ * @oas [post] /stock-locations/{id}
  * operationId: "PostStockLocationsStockLocation"
  * summary: "Update a Stock Location"
  * description: "Updates a Stock Location."
@@ -28,8 +29,8 @@ import { FindParams } from "../../../../types/common"
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.stockLocations.update(stockLocationId, {
- *         name: 'Main Warehouse'
+ *       medusa.admin.stockLocations.update(stock_location_id, {
+ *         name: 'App'
  *       })
  *       .then(({ stock_location }) => {
  *         console.log(stock_location.id);
@@ -41,13 +42,13 @@ import { FindParams } from "../../../../types/common"
  *       --header 'Authorization: Bearer {api_token}' \
  *       --header 'Content-Type: application/json' \
  *       --data-raw '{
- *           "name": "Main Warehouse"
+ *           "name": "App"
  *       }'
  * security:
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Stock Locations
+ *   - Stock Location
  * responses:
  *   200:
  *     description: OK

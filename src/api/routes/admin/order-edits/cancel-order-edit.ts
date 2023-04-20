@@ -7,7 +7,7 @@ import {
 } from "../../../../types/order-edit"
 
 /**
- * @oas [post] /admin/order-edits/{id}/cancel
+ * @oas [post] /order-edits/{id}/cancel
  * operationId: "PostOrderEditsOrderEditCancel"
  * summary: "Cancel an OrderEdit"
  * description: "Cancels an OrderEdit."
@@ -36,7 +36,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK
@@ -70,11 +70,10 @@ export default async (req: Request, res: Response) => {
       .cancel(id, { canceledBy: userId })
   })
 
-  let orderEdit = await orderEditService.retrieve(id, {
+  const orderEdit = await orderEditService.retrieve(id, {
     select: defaultOrderEditFields,
     relations: defaultOrderEditRelations,
   })
-  orderEdit = await orderEditService.decorateTotals(orderEdit)
 
   return res.json({ order_edit: orderEdit })
 }

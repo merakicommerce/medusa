@@ -8,7 +8,7 @@ import { validator } from "../../../../utils/validator"
 import { IsType } from "../../../../utils/validators/is-type"
 
 /**
- * @oas [post] /store/customers/me
+ * @oas [post] /customers/me
  * operationId: PostCustomersCustomer
  * summary: Update Customer
  * description: "Updates a Customer's saved details."
@@ -45,7 +45,7 @@ import { IsType } from "../../../../utils/validators/is-type"
  * security:
  *   - cookie_auth: []
  * tags:
- *   - Customers
+ *   - Customer
  * responses:
  *   200:
  *     description: OK
@@ -100,7 +100,7 @@ export default async (req, res) => {
  *   billing_address:
  *     description: "The Address to be used for billing purposes."
  *     anyOf:
- *       - $ref: "#/components/schemas/AddressPayload"
+ *       - $ref: "#/components/schemas/AddressFields"
  *         description: The full billing address object
  *       - type: string
  *         description: The ID of an existing billing address

@@ -1,3 +1,5 @@
+import { FlagRouter } from "../utils/flag-router"
+
 import { isDefined, MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
 import { ProductVariantService, SearchService } from "."
@@ -13,23 +15,25 @@ import {
   SalesChannel,
 } from "../models"
 import { ImageRepository } from "../repositories/image"
-import { ProductRepository } from "../repositories/product"
+import {
+  FindWithoutRelationsOptions,
+  ProductRepository,
+} from "../repositories/product"
 import { ProductCategoryRepository } from "../repositories/product-category"
 import { ProductOptionRepository } from "../repositories/product-option"
 import { ProductTagRepository } from "../repositories/product-tag"
 import { ProductTypeRepository } from "../repositories/product-type"
 import { ProductVariantRepository } from "../repositories/product-variant"
-import { ExtendedFindConfig, FindConfig, Selector } from "../types/common"
+import { Selector } from "../types/common"
 import {
   CreateProductInput,
+  FilterableProductProps,
   FindProductConfig,
-  ProductFilterOptions,
   ProductOptionInput,
   ProductSelector,
   UpdateProductInput,
 } from "../types/product"
 import { buildQuery, isString, setMetadata } from "../utils"
-import { FlagRouter } from "../utils/flag-router"
 import EventBusService from "./event-bus"
 
 type InjectedDependencies = {
@@ -48,6 +52,9 @@ type InjectedDependencies = {
 }
 
 class ProductService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly productOptionRepository_: typeof ProductOptionRepository
   protected readonly productRepository_: typeof ProductRepository
   protected readonly productVariantRepository_: typeof ProductVariantRepository
@@ -69,6 +76,7 @@ class ProductService extends TransactionBaseService {
   }
 
   constructor({
+    manager,
     productOptionRepository,
     productRepository,
     productVariantRepository,
@@ -84,6 +92,7 @@ class ProductService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.productOptionRepository_ = productOptionRepository
     this.productRepository_ = productRepository
     this.productVariantRepository_ = productVariantRepository
@@ -138,16 +147,20 @@ class ProductService extends TransactionBaseService {
       include_discount_prices: false,
     }
   ): Promise<[Product[], number]> {
-    const productRepo = this.activeManager_.withRepository(
-      this.productRepository_
-    )
+    const manager = this.manager_
+    const productRepo = manager.getCustomRepository(this.productRepository_)
 
-    const { q, ...productSelector } = selector
-    const query = buildQuery(productSelector, config) as ExtendedFindConfig<
-      Product & ProductFilterOptions
-    >
+    const { q, query, relations } = this.prepareListQuery_(selector, config)
 
-    return await productRepo.findAndCount(query, q)
+    if (q) {
+      return await productRepo.getFreeTextSearchResultsAndCount(
+        q,
+        query,
+        relations
+      )
+    }
+
+    return await productRepo.findWithRelationsAndCount(relations, query)
   }
 
   /**
@@ -156,9 +169,8 @@ class ProductService extends TransactionBaseService {
    * @return {Promise} the result of the count operation
    */
   async count(selector: Selector<Product> = {}): Promise<number> {
-    const productRepo = this.activeManager_.withRepository(
-      this.productRepository_
-    )
+    const manager = this.manager_
+    const productRepo = manager.getCustomRepository(this.productRepository_)
     const query = buildQuery(selector)
     return await productRepo.count(query)
   }
@@ -240,14 +252,18 @@ class ProductService extends TransactionBaseService {
   async retrieve_(
     selector: Selector<Product>,
     config: FindProductConfig = {
-      include_discount_prices: false, // TODO: this seams to be unused from the repository
+      include_discount_prices: false,
     }
   ): Promise<Product> {
-    const productRepo = this.activeManager_.withRepository(
-      this.productRepository_
+    const manager = this.manager_
+    const productRepo = manager.getCustomRepository(this.productRepository_)
+
+    const { relations, ...query } = buildQuery(selector, config)
+
+    const product = await productRepo.findOneWithRelations(
+      relations,
+      query as FindWithoutRelationsOptions
     )
-    const query = buildQuery(selector, config as FindConfig<Product>)
-    const product = await productRepo.findOne(query)
 
     if (!product) {
       const selectorConstraints = Object.entries(selector)
@@ -319,19 +335,21 @@ class ProductService extends TransactionBaseService {
   }
 
   async listTypes(): Promise<ProductType[]> {
-    const productTypeRepository = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const productTypeRepository = manager.getCustomRepository(
       this.productTypeRepository_
     )
 
     return await productTypeRepository.find({})
   }
 
-  async listTagsByUsage(take = 10): Promise<ProductTag[]> {
-    const productTagRepo = this.activeManager_.withRepository(
+  async listTagsByUsage(count = 10): Promise<ProductTag[]> {
+    const manager = this.manager_
+    const productTagRepo = manager.getCustomRepository(
       this.productTagRepository_
     )
 
-    return await productTagRepo.listTagsByUsage(take)
+    return await productTagRepo.listTagsByUsage(count)
   }
 
   /**
@@ -364,13 +382,17 @@ class ProductService extends TransactionBaseService {
    */
   async create(productObject: CreateProductInput): Promise<Product> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
-      const productTagRepo = manager.withRepository(this.productTagRepository_)
-      const productTypeRepo = manager.withRepository(
+      const productRepo = manager.getCustomRepository(this.productRepository_)
+      const productTagRepo = manager.getCustomRepository(
+        this.productTagRepository_
+      )
+      const productTypeRepo = manager.getCustomRepository(
         this.productTypeRepository_
       )
-      const imageRepo = manager.withRepository(this.imageRepository_)
-      const optionRepo = manager.withRepository(this.productOptionRepository_)
+      const imageRepo = manager.getCustomRepository(this.imageRepository_)
+      const optionRepo = manager.getCustomRepository(
+        this.productOptionRepository_
+      )
 
       const {
         options,
@@ -472,12 +494,14 @@ class ProductService extends TransactionBaseService {
     update: UpdateProductInput
   ): Promise<Product> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
-      const productTagRepo = manager.withRepository(this.productTagRepository_)
-      const productTypeRepo = manager.withRepository(
+      const productRepo = manager.getCustomRepository(this.productRepository_)
+      const productTagRepo = manager.getCustomRepository(
+        this.productTagRepository_
+      )
+      const productTypeRepo = manager.getCustomRepository(
         this.productTypeRepository_
       )
-      const imageRepo = manager.withRepository(this.imageRepository_)
+      const imageRepo = manager.getCustomRepository(this.imageRepository_)
 
       const relations = ["tags", "images"]
 
@@ -597,18 +621,13 @@ class ProductService extends TransactionBaseService {
    */
   async delete(productId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
+      const productRepo = manager.getCustomRepository(this.productRepository_)
 
       // Should not fail, if product does not exist, since delete is idempotent
-      const product = await productRepo.findOne({
-        where: { id: productId },
-        relations: {
-          variants: {
-            prices: true,
-            options: true,
-          },
-        },
-      })
+      const product = await productRepo.findOne(
+        { id: productId },
+        { relations: ["variants", "variants.prices", "variants.options"] }
+      )
 
       if (!product) {
         return
@@ -636,7 +655,7 @@ class ProductService extends TransactionBaseService {
    */
   async addOption(productId: string, optionTitle: string): Promise<Product> {
     return await this.atomicPhase_(async (manager) => {
-      const productOptionRepo = manager.withRepository(
+      const productOptionRepo = manager.getCustomRepository(
         this.productOptionRepository_
       )
 
@@ -682,7 +701,7 @@ class ProductService extends TransactionBaseService {
     variantOrder: string[]
   ): Promise<Product> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
+      const productRepo = manager.getCustomRepository(this.productRepository_)
 
       const product = await this.retrieve(productId, {
         relations: ["variants"],
@@ -729,7 +748,7 @@ class ProductService extends TransactionBaseService {
     data: ProductOptionInput
   ): Promise<Product> {
     return await this.atomicPhase_(async (manager) => {
-      const productOptionRepo = manager.withRepository(
+      const productOptionRepo = manager.getCustomRepository(
         this.productOptionRepository_
       )
 
@@ -783,8 +802,8 @@ class ProductService extends TransactionBaseService {
   async retrieveOptionByTitle(
     title: string,
     productId: string
-  ): Promise<ProductOption | null> {
-    const productOptionRepo = this.activeManager_.withRepository(
+  ): Promise<ProductOption | undefined> {
+    const productOptionRepo = this.manager_.getCustomRepository(
       this.productOptionRepository_
     )
 
@@ -804,7 +823,7 @@ class ProductService extends TransactionBaseService {
     optionId: string
   ): Promise<Product | void> {
     return await this.atomicPhase_(async (manager) => {
-      const productOptionRepo = manager.withRepository(
+      const productOptionRepo = manager.getCustomRepository(
         this.productOptionRepository_
       )
 
@@ -875,7 +894,7 @@ class ProductService extends TransactionBaseService {
     profileId: string
   ): Promise<Product[]> {
     return await this.atomicPhase_(async (manager) => {
-      const productRepo = manager.withRepository(this.productRepository_)
+      const productRepo = manager.getCustomRepository(this.productRepository_)
 
       const ids = isString(productIds) ? [productIds] : productIds
 
@@ -887,6 +906,47 @@ class ProductService extends TransactionBaseService {
 
       return products
     })
+  }
+
+  /**
+   * Creates a query object to be used for list queries.
+   * @param selector - the selector to create the query from
+   * @param config - the config to use for the query
+   * @return an object containing the query, relations and free-text
+   *   search param.
+   */
+  protected prepareListQuery_(
+    selector: FilterableProductProps | Selector<Product>,
+    config: FindProductConfig
+  ): {
+    q: string
+    relations: (keyof Product)[]
+    query: FindWithoutRelationsOptions
+  } {
+    let q
+    if ("q" in selector) {
+      q = selector.q
+      delete selector.q
+    }
+
+    const query = buildQuery(selector, config)
+
+    if (config.relations && config.relations.length > 0) {
+      query.relations = config.relations
+    }
+
+    if (config.select && config.select.length > 0) {
+      query.select = config.select
+    }
+
+    const rels = query.relations
+    delete query.relations
+
+    return {
+      query: query as FindWithoutRelationsOptions,
+      relations: rels as (keyof Product)[],
+      q,
+    }
   }
 }
 

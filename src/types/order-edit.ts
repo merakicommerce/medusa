@@ -22,11 +22,8 @@ export type CreateOrderEditItemChangeInput = {
 export const defaultOrderEditRelations: string[] = [
   "changes",
   "changes.line_item",
-  "changes.line_item.variant",
   "changes.original_line_item",
-  "changes.original_line_item.variant",
   "items",
-  "items.variant",
   "items.adjustments",
   "items.tax_lines",
   "payment_collection",

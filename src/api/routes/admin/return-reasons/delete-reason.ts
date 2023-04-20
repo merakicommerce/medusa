@@ -2,7 +2,7 @@ import { EntityManager } from "typeorm"
 import { ReturnReasonService } from "../../../../services"
 
 /**
- * @oas [delete] /admin/return-reasons/{id}
+ * @oas [delete] /return-reasons/{id}
  * operationId: "DeleteReturnReason"
  * summary: "Delete a Return Reason"
  * description: "Deletes a return reason."
@@ -31,7 +31,7 @@ import { ReturnReasonService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Return Reasons
+ *   - Return Reason
  * responses:
  *   200:
  *     description: OK

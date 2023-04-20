@@ -34,6 +34,9 @@ type InjectedDependencies = {
  * Handles Fulfillments
  */
 class FulfillmentService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly totalsService_: TotalsService
   protected readonly lineItemService_: LineItemService
   protected readonly shippingProfileService_: ShippingProfileService
@@ -45,6 +48,7 @@ class FulfillmentService extends TransactionBaseService {
   protected readonly productVariantInventoryService_: ProductVariantInventoryService
 
   constructor({
+    manager,
     totalsService,
     fulfillmentRepository,
     trackingLinkRepository,
@@ -56,6 +60,8 @@ class FulfillmentService extends TransactionBaseService {
   }: InjectedDependencies) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
+
+    this.manager_ = manager
 
     this.lineItemRepository_ = lineItemRepository
     this.totalsService_ = totalsService
@@ -135,9 +141,8 @@ class FulfillmentService extends TransactionBaseService {
     item: LineItem | undefined,
     quantity: number
   ): LineItem | null {
-    const lineItemRepo = this.activeManager_.withRepository(
-      this.lineItemRepository_
-    )
+    const manager = this.transactionManager_ ?? this.manager_
+    const lineItemRepo = manager.getCustomRepository(this.lineItemRepository_)
 
     if (!item) {
       // This will in most cases be called by a webhook so to ensure that
@@ -175,7 +180,8 @@ class FulfillmentService extends TransactionBaseService {
       )
     }
 
-    const fulfillmentRepository = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const fulfillmentRepository = manager.getCustomRepository(
       this.fulfillmentRepository_
     )
 
@@ -205,10 +211,12 @@ class FulfillmentService extends TransactionBaseService {
   async createFulfillment(
     order: CreateFulfillmentOrder,
     itemsToFulfill: FulFillmentItemType[],
-    custom: Partial<Fulfillment> = {}
+    custom: Partial<Fulfillment> = {},
+    context: { locationId?: string } = {}
   ): Promise<Fulfillment[]> {
+    const { locationId } = context
     return await this.atomicPhase_(async (manager) => {
-      const fulfillmentRepository = manager.withRepository(
+      const fulfillmentRepository = manager.getCustomRepository(
         this.fulfillmentRepository_
       )
 
@@ -229,6 +237,7 @@ class FulfillmentService extends TransactionBaseService {
             provider_id: shipping_method.shipping_option.provider_id,
             items: items.map((i) => ({ item_id: i.id, quantity: i.quantity })),
             data: {},
+            location_id: locationId,
           })
 
           const result = await fulfillmentRepository.save(ful)
@@ -293,7 +302,7 @@ class FulfillmentService extends TransactionBaseService {
         })
       )
 
-      const fulfillmentRepo = manager.withRepository(
+      const fulfillmentRepo = manager.getCustomRepository(
         this.fulfillmentRepository_
       )
       const canceled = await fulfillmentRepo.save(fulfillment)
@@ -320,10 +329,10 @@ class FulfillmentService extends TransactionBaseService {
     const { metadata, no_notification } = config
 
     return await this.atomicPhase_(async (manager) => {
-      const fulfillmentRepository = manager.withRepository(
+      const fulfillmentRepository = manager.getCustomRepository(
         this.fulfillmentRepository_
       )
-      const trackingLinkRepo = manager.withRepository(
+      const trackingLinkRepo = manager.getCustomRepository(
         this.trackingLinkRepository_
       )
 

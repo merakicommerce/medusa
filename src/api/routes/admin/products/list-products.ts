@@ -1,19 +1,13 @@
 import { IsNumber, IsOptional, IsString } from "class-validator"
-import {
-  PricingService,
-  ProductService,
-  ProductVariantInventoryService,
-  SalesChannelService,
-} from "../../../../services"
+import { PricingService, ProductService } from "../../../../services"
 
-import { FilterableProductProps } from "../../../../types/product"
-import { PricedProduct } from "../../../../types/pricing"
-import { Product } from "../../../../models"
 import { Type } from "class-transformer"
-import { IInventoryService } from "@medusajs/types"
+import { Product } from "../../../../models"
+import { PricedProduct } from "../../../../types/pricing"
+import { FilterableProductProps } from "../../../../types/product"
 
 /**
- * @oas [get] /admin/products
+ * @oas [get] /products
  * operationId: "GetProducts"
  * summary: "List Products"
  * description: "Retrieves a list of Product"
@@ -197,7 +191,7 @@ import { IInventoryService } from "@medusajs/types"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -220,52 +214,23 @@ import { IInventoryService } from "@medusajs/types"
  */
 export default async (req, res) => {
   const productService: ProductService = req.scope.resolve("productService")
-  const inventoryService: IInventoryService | undefined =
-    req.scope.resolve("inventoryService")
-  const productVariantInventoryService: ProductVariantInventoryService =
-    req.scope.resolve("productVariantInventoryService")
-  const salesChannelService: SalesChannelService = req.scope.resolve(
-    "salesChannelService"
-  )
   const pricingService: PricingService = req.scope.resolve("pricingService")
 
   const { skip, take, relations } = req.listConfig
 
-  const manager = req.scope.resolve("manager")
-
-  const [products, count] = await manager.transaction(
-    async (transactionManager) => {
-      const [rawProducts, count] = await productService
-        .withTransaction(transactionManager)
-        .listAndCount(req.filterableFields, req.listConfig)
-
-      let products: (Product | PricedProduct)[] = rawProducts
-
-      const includesPricing = ["variants", "variants.prices"].every(
-        (relation) => relations?.includes(relation)
-      )
-      if (includesPricing) {
-        products = await pricingService
-          .withTransaction(transactionManager)
-          .setProductPrices(rawProducts)
-      }
-
-      if (inventoryService) {
-        const [salesChannelsIds] = await salesChannelService
-          .withTransaction(transactionManager)
-          .listAndCount({}, { select: ["id"] })
-
-        products = await productVariantInventoryService
-          .withTransaction(transactionManager)
-          .setProductAvailability(
-            products,
-            salesChannelsIds.map((salesChannel) => salesChannel.id)
-          )
-      }
-
-      return [products, count]
-    }
+  const [rawProducts, count] = await productService.listAndCount(
+    req.filterableFields,
+    req.listConfig
   )
+
+  let products: (Product | PricedProduct)[] = rawProducts
+
+  const includesPricing = ["variants", "variants.prices"].every((relation) =>
+    relations?.includes(relation)
+  )
+  if (includesPricing) {
+    products = await pricingService.setProductPrices(rawProducts)
+  }
 
   res.json({
     products,

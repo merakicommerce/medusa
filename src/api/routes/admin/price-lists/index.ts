@@ -96,13 +96,6 @@ export const defaultAdminPriceListRelations = ["prices", "customer_groups"]
 /**
  * @schema AdminPriceListRes
  * type: object
- * x-expanded-relations:
- *   field: price_list
- *   relations:
- *     - customer_groups
- *     - prices
- * required:
- *   - price_list
  * properties:
  *   price_list:
  *     $ref: "#/components/schemas/PriceList"
@@ -114,10 +107,6 @@ export type AdminPriceListRes = {
 /**
  * @schema AdminPriceListDeleteBatchRes
  * type: object
- * required:
- *   - ids
- *   - object
- *   - deleted
  * properties:
  *   ids:
  *     type: array
@@ -142,10 +131,6 @@ export type AdminPriceListDeleteBatchRes = {
 /**
  * @schema AdminPriceListDeleteProductPricesRes
  * type: object
- * required:
- *   - ids
- *   - object
- *   - deleted
  * properties:
  *    ids:
  *     type: array
@@ -166,10 +151,6 @@ export type AdminPriceListDeleteProductPricesRes = AdminPriceListDeleteBatchRes
 /**
  * @schema AdminPriceListDeleteVariantPricesRes
  * type: object
- * required:
- *   - ids
- *   - object
- *   - deleted
  * properties:
  *    ids:
  *     type: array
@@ -190,10 +171,6 @@ export type AdminPriceListDeleteVariantPricesRes = AdminPriceListDeleteBatchRes
 /**
  * @schema AdminPriceListDeleteRes
  * type: object
- * required:
- *   - id
- *   - object
- *   - deleted
  * properties:
  *   id:
  *     type: string
@@ -212,11 +189,6 @@ export type AdminPriceListDeleteRes = DeleteResponse
 /**
  * @schema AdminPriceListsListRes
  * type: object
- * required:
- *   - price_lists
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   price_lists:
  *    type: array
@@ -239,22 +211,6 @@ export type AdminPriceListsListRes = PaginatedResponse & {
 /**
  * @schema AdminPriceListsProductsListRes
  * type: object
- * x-expanded-relations:
- *   field: products
- *   relations:
- *     - categories
- *     - collection
- *     - images
- *     - options
- *     - tags
- *     - type
- *     - variants
- *     - variants.options
- * required:
- *   - products
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   products:
  *     type: array

@@ -1,7 +1,4 @@
 import { EntityManager } from "typeorm"
-
-import { humanizeAmount } from "medusa-core-utils"
-
 import { AbstractBatchJobStrategy, IFileService } from "../../../interfaces"
 import { Product, ProductVariant } from "../../../models"
 import { BatchJobService, ProductService } from "../../../services"
@@ -463,12 +460,7 @@ export default class ProductExportStrategy extends AbstractBatchJobStrategy {
                     priceData.currency_code.toLowerCase()
                 )
               })
-              return price?.amount
-                ? humanizeAmount(
-                    price?.amount,
-                    priceData.currency_code!
-                  ).toString()
-                : ""
+              return price?.amount?.toString() ?? ""
             },
             entityName: "variant",
           },
@@ -495,12 +487,7 @@ export default class ProductExportStrategy extends AbstractBatchJobStrategy {
                     priceData.region?.id?.toLowerCase()
                 )
               })
-              return price?.amount
-                ? humanizeAmount(
-                    price?.amount,
-                    priceData.region!.currency_code!
-                  ).toString()
-                : ""
+              return price?.amount?.toString() ?? ""
             },
             entityName: "variant",
           },
@@ -559,7 +546,7 @@ export default class ProductExportStrategy extends AbstractBatchJobStrategy {
   }
 
   /**
-   * Return the maximum number of each relation that must appears in the export.
+   * Return the maximun number of each relation that must appears in the export.
    * The number of item of a relation can vary between 0-Infinity and therefore the number of columns
    * that will be added to the export correspond to that number
    * @param products - The main entity to get the relation shape from

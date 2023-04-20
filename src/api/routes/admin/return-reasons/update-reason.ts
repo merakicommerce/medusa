@@ -9,7 +9,7 @@ import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/return-reasons/{id}
+ * @oas [post] /return-reasons/{id}
  * operationId: "PostReturnReasonsReason"
  * summary: "Update a Return Reason"
  * description: "Updates a Return Reason"
@@ -49,7 +49,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Return Reasons
+ *   - Return Reason
  * responses:
  *   200:
  *     description: OK

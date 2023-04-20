@@ -1,7 +1,7 @@
 import { PricingService, ProductService } from "../../../../services"
 
 /**
- * @oas [get] /admin/products/{id}
+ * @oas [get] /products/{id}
  * operationId: "GetProductsProduct"
  * summary: "Get a Product"
  * description: "Retrieves a Product."
@@ -30,7 +30,7 @@ import { PricingService, ProductService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK

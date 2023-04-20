@@ -4,7 +4,7 @@ import ProductCollectionService from "../../../../services/product-collection"
 import { defaultAdminCollectionsRelations } from "."
 
 /**
- * @oas [get] /admin/collections/{id}
+ * @oas [get] /collections/{id}
  * operationId: "GetCollectionsCollection"
  * summary: "Get a Collection"
  * description: "Retrieves a Product Collection."
@@ -33,7 +33,7 @@ import { defaultAdminCollectionsRelations } from "."
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Collections
+ *   - Collection
  * responses:
  *  "200":
  *    description: OK

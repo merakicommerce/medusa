@@ -1,5 +1,5 @@
-import { Fulfillment } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { Fulfillment } from "../models/fulfillment"
 
-export const FulfillmentRepository = dataSource.getRepository(Fulfillment)
-export default FulfillmentRepository
+@EntityRepository(Fulfillment)
+export class FulfillmentRepository extends Repository<Fulfillment> {}

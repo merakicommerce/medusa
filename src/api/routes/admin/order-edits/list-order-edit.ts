@@ -4,7 +4,7 @@ import { extendedFindParamsMixin } from "../../../../types/common"
 import { IsOptional, IsString } from "class-validator"
 
 /**
- * @oas [get] /admin/order-edits
+ * @oas [get] /order-edits
  * operationId: "GetOrderEdits"
  * summary: "List OrderEdits"
  * description: "List OrderEdits."
@@ -39,7 +39,7 @@ import { IsOptional, IsString } from "class-validator"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Order Edits
+ *   - OrderEdit
  * responses:
  *   200:
  *     description: OK

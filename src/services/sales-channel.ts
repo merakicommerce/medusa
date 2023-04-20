@@ -1,17 +1,17 @@
-import { FindConfig, QuerySelector, Selector } from "../types/common"
 import {
   CreateSalesChannelInput,
   UpdateSalesChannelInput,
 } from "../types/sales-channels"
+import { FindConfig, QuerySelector, Selector } from "../types/common"
 
-import { isDefined, MedusaError } from "medusa-core-utils"
 import { EntityManager } from "typeorm"
-import { TransactionBaseService } from "../interfaces"
+import EventBusService from "./event-bus"
+import { isDefined, MedusaError } from "medusa-core-utils"
 import { SalesChannel } from "../models"
 import { SalesChannelRepository } from "../repositories/sales-channel"
-import { buildQuery } from "../utils"
-import EventBusService from "./event-bus"
 import StoreService from "./store"
+import { TransactionBaseService } from "../interfaces"
+import { buildQuery } from "../utils"
 
 type InjectedDependencies = {
   salesChannelRepository: typeof SalesChannelRepository
@@ -27,6 +27,9 @@ class SalesChannelService extends TransactionBaseService {
     DELETED: "sales_channel.deleted",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly salesChannelRepository_: typeof SalesChannelRepository
   protected readonly eventBusService_: EventBusService
   protected readonly storeService_: StoreService
@@ -34,14 +37,20 @@ class SalesChannelService extends TransactionBaseService {
   constructor({
     salesChannelRepository,
     eventBusService,
+    manager,
     storeService,
   }: InjectedDependencies) {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.salesChannelRepository_ = salesChannelRepository
     this.eventBusService_ = eventBusService
     this.storeService_ = storeService
+  }
+
+  private getManager(): EntityManager {
+    return this.transactionManager_ ?? this.manager_
   }
 
   /**
@@ -55,16 +64,18 @@ class SalesChannelService extends TransactionBaseService {
     selector: Selector<SalesChannel>,
     config: FindConfig<SalesChannel> = {}
   ): Promise<SalesChannel> {
-    const salesChannelRepo = this.activeManager_.withRepository(
+    const manager = this.getManager()
+
+    const salesChannelRepo = manager.getCustomRepository(
       this.salesChannelRepository_
     )
 
-    const query = buildQuery(selector, config)
+    const { relations, ...query } = buildQuery(selector, config)
 
-    const salesChannel = await salesChannelRepo.findOne({
-      ...query,
-      relationLoadStrategy: "query",
-    })
+    const salesChannel = await salesChannelRepo.findOneWithRelations(
+      relations as (keyof SalesChannel)[],
+      query
+    )
 
     if (!salesChannel) {
       const selectorConstraints = Object.entries(selector)
@@ -138,7 +149,8 @@ class SalesChannelService extends TransactionBaseService {
       take: 20,
     }
   ): Promise<[SalesChannel[], number]> {
-    const salesChannelRepo = this.activeManager_.withRepository(
+    const manager = this.getManager()
+    const salesChannelRepo = manager.getCustomRepository(
       this.salesChannelRepository_
     )
 
@@ -167,8 +179,8 @@ class SalesChannelService extends TransactionBaseService {
    */
   async create(data: CreateSalesChannelInput): Promise<SalesChannel | never> {
     return await this.atomicPhase_(async (manager) => {
-      const salesChannelRepo: typeof SalesChannelRepository =
-        manager.withRepository(this.salesChannelRepository_)
+      const salesChannelRepo: SalesChannelRepository =
+        manager.getCustomRepository(this.salesChannelRepository_)
 
       const salesChannel = salesChannelRepo.create(data)
 
@@ -187,8 +199,8 @@ class SalesChannelService extends TransactionBaseService {
     data: UpdateSalesChannelInput
   ): Promise<SalesChannel | never> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const salesChannelRepo: typeof SalesChannelRepository =
-        transactionManager.withRepository(this.salesChannelRepository_)
+      const salesChannelRepo: SalesChannelRepository =
+        transactionManager.getCustomRepository(this.salesChannelRepository_)
 
       const salesChannel = await this.retrieve(salesChannelId)
 
@@ -218,7 +230,7 @@ class SalesChannelService extends TransactionBaseService {
    */
   async delete(salesChannelId: string): Promise<void> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const salesChannelRepo = transactionManager.withRepository(
+      const salesChannelRepo = transactionManager.getCustomRepository(
         this.salesChannelRepository_
       )
 
@@ -286,11 +298,11 @@ class SalesChannelService extends TransactionBaseService {
    * @return the sales channel
    */
   async retrieveDefault(): Promise<SalesChannel> {
-    const store = await this.storeService_
-      .withTransaction(this.activeManager_)
-      .retrieve({
-        relations: ["default_sales_channel"],
-      })
+    const manager = this.getManager()
+
+    const store = await this.storeService_.withTransaction(manager).retrieve({
+      relations: ["default_sales_channel"],
+    })
 
     if (!store.default_sales_channel) {
       throw new MedusaError(
@@ -313,7 +325,7 @@ class SalesChannelService extends TransactionBaseService {
     productIds: string[]
   ): Promise<SalesChannel | never> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const salesChannelRepo = transactionManager.withRepository(
+      const salesChannelRepo = transactionManager.getCustomRepository(
         this.salesChannelRepository_
       )
 
@@ -334,7 +346,7 @@ class SalesChannelService extends TransactionBaseService {
     productIds: string[]
   ): Promise<SalesChannel | never> {
     return await this.atomicPhase_(async (transactionManager) => {
-      const salesChannelRepo = transactionManager.withRepository(
+      const salesChannelRepo = transactionManager.getCustomRepository(
         this.salesChannelRepository_
       )
 

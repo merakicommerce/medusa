@@ -1,5 +1,4 @@
-import { SearchUtils } from "@medusajs/utils"
-import { aliasTo, asFunction, asValue, Lifetime } from "awilix"
+import { aliasTo, asClass, asFunction, asValue } from "awilix"
 import { Express } from "express"
 import fs from "fs"
 import { sync as existsSync } from "fs-exists-cached"
@@ -7,6 +6,7 @@ import glob from "glob"
 import _ from "lodash"
 import { createRequireFromPath } from "medusa-core-utils"
 import {
+  BaseService as LegacyBaseService,
   FileService,
   FulfillmentService,
   OauthService,
@@ -20,8 +20,11 @@ import {
   isCartCompletionStrategy,
   isFileService,
   isNotificationService,
+  isPaymentService,
   isPriceSelectionStrategy,
+  isSearchService,
   isTaxCalculationStrategy,
+  TransactionBaseService as BaseService,
 } from "../interfaces"
 import { MiddlewareService } from "../services"
 import {
@@ -31,10 +34,6 @@ import {
   MedusaContainer,
 } from "../types/global"
 import formatRegistrationName from "../utils/format-registration-name"
-import {
-  registerPaymentProcessorFromClass,
-  registerPaymentServiceFromClass,
-} from "./helpers/plugins"
 import logger from "./logger"
 
 type Options = {
@@ -66,12 +65,6 @@ export default async ({
   activityId,
 }: Options): Promise<void> => {
   const resolved = getResolvedPlugins(rootDirectory, configModule) || []
-
-  await Promise.all(
-    resolved.map(
-      async (pluginDetails) => await runSetupFunctions(pluginDetails)
-    )
-  )
 
   await Promise.all(
     resolved.map(async (pluginDetails) => {
@@ -368,12 +361,32 @@ export async function registerServices(
       const loaded = require(fn).default
       const name = formatRegistrationName(fn)
 
-      const context = { container, pluginDetails, registrationName: name }
+      if (
+        !(loaded.prototype instanceof LegacyBaseService) &&
+        !(loaded.prototype instanceof BaseService)
+      ) {
+        const logger = container.resolve<Logger>("logger")
+        const message = `The class must be a valid service implementation, please check ${fn}`
+        logger.error(message)
+        throw new Error(message)
+      }
 
-      registerPaymentServiceFromClass(loaded, context)
-      registerPaymentProcessorFromClass(loaded, context)
+      if (isPaymentService(loaded.prototype)) {
+        // Register our payment providers to paymentProviders
+        container.registerAdd(
+          "paymentProviders",
+          asFunction((cradle) => new loaded(cradle, pluginDetails.options))
+        )
 
-      if (loaded.prototype instanceof OauthService) {
+        // Add the service directly to the container in order to make simple
+        // resolution if we already know which payment provider we need to use
+        container.register({
+          [name]: asFunction(
+            (cradle) => new loaded(cradle, pluginDetails.options)
+          ),
+          [`pp_${loaded.identifier}`]: aliasTo(name),
+        })
+      } else if (loaded.prototype instanceof OauthService) {
         const appDetails = loaded.getAppDetails(pluginDetails.options)
 
         const oauthService =
@@ -383,49 +396,36 @@ export async function registerServices(
         const name = appDetails.application_name
         container.register({
           [`${name}Oauth`]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
+            (cradle) => new loaded(cradle, pluginDetails.options)
           ),
         })
       } else if (loaded.prototype instanceof FulfillmentService) {
         // Register our payment providers to paymentProviders
         container.registerAdd(
           "fulfillmentProviders",
-          asFunction((cradle) => new loaded(cradle, pluginDetails.options), {
-            lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-          })
+          asFunction((cradle) => new loaded(cradle, pluginDetails.options))
         )
 
         // Add the service directly to the container in order to make simple
         // resolution if we already know which fulfillment provider we need to use
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
-          ),
+            (cradle) => new loaded(cradle, pluginDetails.options)
+          ).singleton(),
           [`fp_${loaded.identifier}`]: aliasTo(name),
         })
       } else if (isNotificationService(loaded.prototype)) {
         container.registerAdd(
           "notificationProviders",
-          asFunction((cradle) => new loaded(cradle, pluginDetails.options), {
-            lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-          })
+          asFunction((cradle) => new loaded(cradle, pluginDetails.options))
         )
 
         // Add the service directly to the container in order to make simple
         // resolution if we already know which notification provider we need to use
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
-          ),
+            (cradle) => new loaded(cradle, pluginDetails.options)
+          ).singleton(),
           [`noti_${loaded.identifier}`]: aliasTo(name),
         })
       } else if (
@@ -436,22 +436,16 @@ export async function registerServices(
         // resolution if we already know which file storage provider we need to use
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
+            (cradle) => new loaded(cradle, pluginDetails.options)
           ),
           [`fileService`]: aliasTo(name),
         })
-      } else if (SearchUtils.isSearchService(loaded.prototype)) {
+      } else if (isSearchService(loaded.prototype)) {
         // Add the service directly to the container in order to make simple
         // resolution if we already know which search provider we need to use
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
+            (cradle) => new loaded(cradle, pluginDetails.options)
           ),
           [`searchService`]: aliasTo(name),
         })
@@ -460,27 +454,19 @@ export async function registerServices(
       } else if (loaded.prototype instanceof AbstractTaxService) {
         container.registerAdd(
           "taxProviders",
-          asFunction((cradle) => new loaded(cradle, pluginDetails.options), {
-            lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-          })
+          asFunction((cradle) => new loaded(cradle, pluginDetails.options))
         )
 
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SINGLETON,
-            }
-          ),
+            (cradle) => new loaded(cradle, pluginDetails.options)
+          ).singleton(),
           [`tp_${loaded.identifier}`]: aliasTo(name),
         })
       } else {
         container.register({
           [name]: asFunction(
-            (cradle) => new loaded(cradle, pluginDetails.options),
-            {
-              lifetime: loaded.LIFE_TIME || Lifetime.SCOPED,
-            }
+            (cradle) => new loaded(cradle, pluginDetails.options)
           ),
         })
       }
@@ -528,16 +514,18 @@ function registerRepositories(
 ): void {
   const files = glob.sync(`${pluginDetails.resolve}/repositories/*.js`, {})
   files.forEach((fn) => {
-    const loaded = require(fn)
+    const loaded = require(fn) as ClassConstructor<unknown>
 
-    Object.entries(loaded).map(([, val]: [string, any]) => {
-      if (typeof loaded === "object") {
-        const name = formatRegistrationName(fn)
-        container.register({
-          [name]: asValue(val),
-        })
+    Object.entries(loaded).map(
+      ([, val]: [string, ClassConstructor<unknown>]) => {
+        if (typeof val === "function") {
+          const name = formatRegistrationName(fn)
+          container.register({
+            [name]: asClass(val),
+          })
+        }
       }
-    })
+    )
   })
 }
 
@@ -573,28 +561,6 @@ function registerModels(
       }
     )
   })
-}
-
-/**
- * Runs all setup functions in a plugin. Setup functions are run before anything from the plugin is
- * registered to the container. This is useful for running custom build logic, fetching remote
- * configurations, etc.
- * @param pluginDetails The plugin details including plugin options, version, id, resolved path, etc.
- */
-async function runSetupFunctions(pluginDetails: PluginDetails): Promise<void> {
-  const files = glob.sync(`${pluginDetails.resolve}/setup/*.js`, {})
-  await Promise.all(
-    files.map(async (fn) => {
-      const loaded = require(fn).default
-      try {
-        await loaded()
-      } catch (err) {
-        throw new Error(
-          `A setup function from ${pluginDetails.name} failed. ${err}`
-        )
-      }
-    })
-  )
 }
 
 // TODO: Create unique id for each plugin
@@ -668,18 +634,8 @@ function resolvePlugin(pluginName: string): {
     )
     // warnOnIncompatiblePeerDependency(packageJSON.name, packageJSON)
 
-    const computedResolvedPath =
-      resolvedPath + (process.env.DEV_MODE ? "/src" : "")
-
-    // Add support for a plugin to output the build into a dist directory
-    const resolvedPathToDist = resolvedPath + "/dist"
-    const isDistExist =
-      resolvedPathToDist &&
-      !process.env.DEV_MODE &&
-      existsSync(resolvedPath + "/dist")
-
     return {
-      resolve: isDistExist ? resolvedPathToDist : computedResolvedPath,
+      resolve: resolvedPath + (process.env.DEV_MODE ? "/src" : ""),
       id: createPluginId(packageJSON.name),
       name: packageJSON.name,
       options: {},

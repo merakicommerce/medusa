@@ -4,7 +4,7 @@ import { PriceList } from "../../../.."
 import PriceListService from "../../../../services/price-list"
 
 /**
- * @oas [get] /admin/price-lists/{id}
+ * @oas [get] /price-lists/{id}
  * operationId: "GetPriceListsPriceList"
  * summary: "Get a Price List"
  * description: "Retrieves a Price List."
@@ -33,7 +33,7 @@ import PriceListService from "../../../../services/price-list"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Price Lists
+ *   - Price List
  * responses:
  *   200:
  *     description: OK

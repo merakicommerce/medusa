@@ -47,6 +47,8 @@ class RegionService extends TransactionBaseService {
     DELETED: "region.deleted",
   }
 
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
   protected featureFlagRouter_: FlagRouter
 
   protected readonly eventBus_: EventBusService
@@ -63,6 +65,7 @@ class RegionService extends TransactionBaseService {
   protected readonly taxProviderRepository_: typeof TaxProviderRepository
 
   constructor({
+    manager,
     regionRepository,
     countryRepository,
     storeService,
@@ -75,9 +78,22 @@ class RegionService extends TransactionBaseService {
     fulfillmentProviderService,
     featureFlagRouter,
   }: InjectedDependencies) {
-    // eslint-disable-next-line prefer-rest-params
-    super(arguments[0])
+    super({
+      manager,
+      regionRepository,
+      countryRepository,
+      storeService,
+      eventBusService,
+      currencyRepository,
+      paymentProviderRepository,
+      fulfillmentProviderRepository,
+      taxProviderRepository,
+      paymentProviderService,
+      fulfillmentProviderService,
+      featureFlagRouter,
+    })
 
+    this.manager_ = manager
     this.regionRepository_ = regionRepository
     this.countryRepository_ = countryRepository
     this.storeService_ = storeService
@@ -100,8 +116,10 @@ class RegionService extends TransactionBaseService {
    */
   async create(data: CreateRegionInput): Promise<Region> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepository = manager.withRepository(this.regionRepository_)
-      const currencyRepository = manager.withRepository(
+      const regionRepository = manager.getCustomRepository(
+        this.regionRepository_
+      )
+      const currencyRepository = manager.getCustomRepository(
         this.currencyRepository_
       )
 
@@ -171,8 +189,10 @@ class RegionService extends TransactionBaseService {
    */
   async update(regionId: string, update: UpdateRegionInput): Promise<Region> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepository = manager.withRepository(this.regionRepository_)
-      const currencyRepository = manager.withRepository(
+      const regionRepository = manager.getCustomRepository(
+        this.regionRepository_
+      )
+      const currencyRepository = manager.getCustomRepository(
         this.currencyRepository_
       )
 
@@ -244,13 +264,13 @@ class RegionService extends TransactionBaseService {
     regionData: Omit<T, "metadata" | "currency_code">,
     id?: T extends UpdateRegionInput ? string : undefined
   ): Promise<DeepPartial<Region>> {
-    const ppRepository = this.activeManager_.withRepository(
+    const ppRepository = this.manager_.getCustomRepository(
       this.paymentProviderRepository_
     )
-    const fpRepository = this.activeManager_.withRepository(
+    const fpRepository = this.manager_.getCustomRepository(
       this.fulfillmentProviderRepository_
     )
-    const tpRepository = this.activeManager_.withRepository(
+    const tpRepository = this.manager_.getCustomRepository(
       this.taxProviderRepository_
     )
 
@@ -272,7 +292,7 @@ class RegionService extends TransactionBaseService {
 
     if ((regionData as UpdateRegionInput).tax_provider_id) {
       const tp = await tpRepository.findOne({
-        where: { id: (regionData as UpdateRegionInput).tax_provider_id! },
+        where: { id: (regionData as UpdateRegionInput).tax_provider_id },
       })
       if (!tp) {
         throw new MedusaError(
@@ -369,7 +389,7 @@ class RegionService extends TransactionBaseService {
     code: Country["iso_2"],
     regionId: string
   ): Promise<Country | never> {
-    const countryRepository = this.activeManager_.withRepository(
+    const countryRepository = this.manager_.getCustomRepository(
       this.countryRepository_
     )
 
@@ -418,12 +438,15 @@ class RegionService extends TransactionBaseService {
     code: Country["iso_2"],
     config: FindConfig<Region> = {}
   ): Promise<Region | never> {
-    const countryRepository = this.activeManager_.withRepository(
+    const countryRepository = this.manager_.getCustomRepository(
       this.countryRepository_
     )
 
-    const query = buildQuery({ iso_2: code.toLowerCase() }, {})
-    const country = await countryRepository.findOne(query)
+    const country = await countryRepository.findOne({
+      where: {
+        iso_2: code.toLowerCase(),
+      },
+    })
 
     if (!country) {
       throw new MedusaError(
@@ -479,7 +502,7 @@ class RegionService extends TransactionBaseService {
       )
     }
 
-    const regionRepository = this.activeManager_.withRepository(
+    const regionRepository = this.manager_.getCustomRepository(
       this.regionRepository_
     )
 
@@ -511,9 +534,7 @@ class RegionService extends TransactionBaseService {
       take: 10,
     }
   ): Promise<Region[]> {
-    const regionRepo = this.activeManager_.withRepository(
-      this.regionRepository_
-    )
+    const regionRepo = this.manager_.getCustomRepository(this.regionRepository_)
 
     const query = buildQuery(selector, config)
     return regionRepo.find(query)
@@ -527,8 +548,8 @@ class RegionService extends TransactionBaseService {
    */
   async delete(regionId: string): Promise<void> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
-      const countryRepo = manager.withRepository(this.countryRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
+      const countryRepo = manager.getCustomRepository(this.countryRepository_)
 
       const region = await this.retrieve(regionId, { relations: ["countries"] })
 
@@ -558,7 +579,7 @@ class RegionService extends TransactionBaseService {
    */
   async addCountry(regionId: string, code: Country["iso_2"]): Promise<Region> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
 
       const country = await this.validateCountry(code, regionId)
 
@@ -599,7 +620,7 @@ class RegionService extends TransactionBaseService {
     code: Country["iso_2"]
   ): Promise<Region> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
 
       const region = await this.retrieve(regionId, { relations: ["countries"] })
 
@@ -640,8 +661,10 @@ class RegionService extends TransactionBaseService {
     providerId: string
   ): Promise<Region | never> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
-      const ppRepo = manager.withRepository(this.paymentProviderRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
+      const ppRepo = manager.getCustomRepository(
+        this.paymentProviderRepository_
+      )
 
       const region = await this.retrieve(regionId, {
         relations: ["payment_providers"],
@@ -689,8 +712,10 @@ class RegionService extends TransactionBaseService {
     providerId: string
   ): Promise<Region | never> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
-      const fpRepo = manager.withRepository(this.fulfillmentProviderRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
+      const fpRepo = manager.getCustomRepository(
+        this.fulfillmentProviderRepository_
+      )
 
       const region = await this.retrieve(regionId, {
         relations: ["fulfillment_providers"],
@@ -736,7 +761,7 @@ class RegionService extends TransactionBaseService {
     providerId: string
   ): Promise<Region | never> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
 
       const region = await this.retrieve(regionId, {
         relations: ["payment_providers"],
@@ -775,7 +800,7 @@ class RegionService extends TransactionBaseService {
     providerId: string
   ): Promise<Region | never> {
     return await this.atomicPhase_(async (manager) => {
-      const regionRepo = manager.withRepository(this.regionRepository_)
+      const regionRepo = manager.getCustomRepository(this.regionRepository_)
 
       const region = await this.retrieve(regionId, {
         relations: ["fulfillment_providers"],

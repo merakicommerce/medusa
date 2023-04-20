@@ -1,5 +1,5 @@
-import { ShippingMethod } from "../models"
-import { dataSource } from "../loaders/database"
+import { EntityRepository, Repository } from "typeorm"
+import { ShippingMethod } from "../models/shipping-method"
 
-export const ShippingMethodRepository = dataSource.getRepository(ShippingMethod)
-export default ShippingMethodRepository
+@EntityRepository(ShippingMethod)
+export class ShippingMethodRepository extends Repository<ShippingMethod> {}

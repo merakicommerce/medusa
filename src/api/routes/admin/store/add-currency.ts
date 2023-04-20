@@ -2,7 +2,7 @@ import { StoreService } from "../../../../services"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/store/currencies/{code}
+ * @oas [post] /store/currencies/{code}
  * operationId: "PostStoreCurrenciesCode"
  * summary: "Add a Currency Code"
  * description: "Adds a Currency Code to the available currencies."
@@ -28,7 +28,7 @@ import { EntityManager } from "typeorm"
  *       // must be previously logged in or use api token
  *       medusa.admin.store.addCurrency('eur')
  *       .then(({ store }) => {
- *         console.log(store.currencies);
+ *         console.log(store.id);
  *       });
  *   - lang: Shell
  *     label: cURL

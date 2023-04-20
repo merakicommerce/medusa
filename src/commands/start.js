@@ -2,7 +2,6 @@ import "core-js/stable"
 import "regenerator-runtime/runtime"
 
 import express from "express"
-import { GracefulShutdownServer } from "medusa-core-utils"
 import { track } from "medusa-telemetry"
 import { scheduleJob } from "node-schedule"
 
@@ -18,45 +17,22 @@ export default async function ({ port, directory }) {
 
     const app = express()
 
-    try {
-      const { dbConnection } = await loaders({ directory, expressApp: app })
-      const serverActivity = Logger.activity(`Creating server`)
-      const server = GracefulShutdownServer.create(
-        app.listen(port, (err) => {
-          if (err) {
-            return
-          }
-          Logger.success(serverActivity, `Server is ready on port: ${port}`)
-          track("CLI_START_COMPLETED")
-        })
-      )
-
-      // Handle graceful shutdown
-      const gracefulShutDown = () => {
-        server
-          .shutdown()
-          .then(() => {
-            Logger.info("Gracefully stopping the server.")
-            process.exit(0)
-          })
-          .catch((e) => {
-            Logger.error("Error received when shutting down the server.", e)
-            process.exit(1)
-          })
+    const { dbConnection } = await loaders({ directory, expressApp: app })
+    const serverActivity = Logger.activity(`Creating server`)
+    const server = app.listen(port, (err) => {
+      if (err) {
+        return
       }
-      process.on("SIGTERM", gracefulShutDown)
-      process.on("SIGINT", gracefulShutDown)
+      Logger.success(serverActivity, `Server is ready on port: ${port}`)
+      track("CLI_START_COMPLETED")
+    })
 
-      scheduleJob(CRON_SCHEDULE, () => {
-        track("PING")
-      })
+    scheduleJob(CRON_SCHEDULE, () => {
+      track("PING")
+    })
 
-      return { dbConnection, server }
-    } catch (err) {
-      Logger.error("Error starting server", err)
-      process.exit(1)
-    }
+    return { dbConnection, server }
   }
 
-  await start()
+  const { dbConnection, server } = await start()
 }

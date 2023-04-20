@@ -7,7 +7,7 @@ import { AddressCreatePayload } from "../../../../types/common"
 import { validator } from "../../../../utils/validator"
 
 /**
- * @oas [post] /store/customers/me/addresses
+ * @oas [post] /customers/me/addresses
  * operationId: PostCustomersCustomerAddresses
  * summary: "Add a Shipping Address"
  * description: "Adds a Shipping Address to a Customer's saved addresses."
@@ -63,7 +63,7 @@ import { validator } from "../../../../utils/validator"
  * security:
  *   - cookie_auth: []
  * tags:
- *   - Customers
+ *   - Customer
  * responses:
  *  "200":
  *    description: "A successful response"
@@ -117,7 +117,16 @@ export default async (req, res) => {
  * properties:
  *   address:
  *     description: "The Address to add to the Customer."
- *     $ref: "#/components/schemas/AddressCreatePayload"
+ *     allOf:
+ *       - $ref: "#/components/schemas/AddressFields"
+ *       - type: object
+ *         required:
+ *           - first_name
+ *           - last_name
+ *           - address_1
+ *           - city
+ *           - country_code
+ *           - postal_code
  */
 export class StorePostCustomersCustomerAddressesReq {
   @ValidateNested()

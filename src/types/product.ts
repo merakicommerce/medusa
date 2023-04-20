@@ -264,11 +264,3 @@ export class ProductTypeReq {
   @IsString()
   value: string
 }
-
-export type ProductFilterOptions = {
-  price_list_id?: FindOperator<PriceList>
-  sales_channel_id?: FindOperator<SalesChannel>
-  category_id?: FindOperator<ProductCategory>
-  include_category_children?: boolean
-  discount_condition_id?: string
-}

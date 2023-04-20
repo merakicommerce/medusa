@@ -35,11 +35,6 @@ export default (app) => {
 /**
  * @schema AdminCurrenciesListRes
  * type: object
- * required:
- *   - currencies
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   currencies:
  *     type: array
@@ -62,8 +57,6 @@ export type AdminCurrenciesListRes = PaginatedResponse & {
 /**
  * @schema AdminCurrenciesRes
  * type: object
- * required:
- *   - currency
  * properties:
  *   currency:
  *       $ref: "#/components/schemas/Currency"

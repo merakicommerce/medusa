@@ -1,7 +1,7 @@
 import InviteService from "../../../../services/invite"
 
 /**
- * @oas [get] /admin/invites
+ * @oas [get] /invites
  * operationId: "GetInvites"
  * summary: "Lists Invites"
  * description: "Lists all Invites"
@@ -28,7 +28,7 @@ import InviteService from "../../../../services/invite"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Invites
+ *   - Invite
  * responses:
  *   200:
  *     description: OK

@@ -6,7 +6,7 @@ import { Type } from "class-transformer"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/gift-cards
+ * @oas [post] /gift-cards
  * operationId: "PostGiftCards"
  * summary: "Create a Gift Card"
  * description: "Creates a Gift Card that can redeemed by its unique code. The Gift Card is only valid within 1 region."
@@ -44,7 +44,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Gift Cards
+ *   - Gift Card
  * responses:
  *   200:
  *     description: OK

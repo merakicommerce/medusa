@@ -1,12 +1,12 @@
 import { defaultAdminProductFields, defaultAdminProductRelations } from "."
 
 import { IsString } from "class-validator"
-import { PricingService, ProductService } from "../../../../services"
+import { ProductService } from "../../../../services"
 import { validator } from "../../../../utils/validator"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [post] /admin/products/{id}/options/{option_id}
+ * @oas [post] /products/{id}/options/{option_id}
  * operationId: "PostProductsProductOptionsOption"
  * summary: "Update a Product Option"
  * description: "Updates a Product Option"
@@ -47,7 +47,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -77,7 +77,6 @@ export default async (req, res) => {
   )
 
   const productService: ProductService = req.scope.resolve("productService")
-  const pricingService: PricingService = req.scope.resolve("pricingService")
 
   const manager: EntityManager = req.scope.resolve("manager")
   await manager.transaction(async (transactionManager) => {
@@ -86,12 +85,10 @@ export default async (req, res) => {
       .updateOption(id, option_id, validated)
   })
 
-  const rawProduct = await productService.retrieve(id, {
+  const product = await productService.retrieve(id, {
     select: defaultAdminProductFields,
     relations: defaultAdminProductRelations,
   })
-
-  const [product] = await pricingService.setProductPrices([rawProduct])
 
   res.json({ product })
 }

@@ -42,6 +42,9 @@ type InjectedDependencies = {
 }
 
 class LineItemService extends TransactionBaseService {
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly lineItemRepository_: typeof LineItemRepository
   protected readonly itemTaxLineRepo_: typeof LineItemTaxLineRepository
   protected readonly cartRepository_: typeof CartRepository
@@ -54,6 +57,7 @@ class LineItemService extends TransactionBaseService {
   protected readonly taxProviderService_: TaxProviderService
 
   constructor({
+    manager,
     lineItemRepository,
     lineItemTaxLineRepository,
     productVariantService,
@@ -68,6 +72,7 @@ class LineItemService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.lineItemRepository_ = lineItemRepository
     this.itemTaxLineRepo_ = lineItemTaxLineRepository
     this.productVariantService_ = productVariantService
@@ -88,9 +93,8 @@ class LineItemService extends TransactionBaseService {
       order: { created_at: "DESC" },
     }
   ): Promise<LineItem[]> {
-    const lineItemRepo = this.activeManager_.withRepository(
-      this.lineItemRepository_
-    )
+    const manager = this.manager_
+    const lineItemRepo = manager.getCustomRepository(this.lineItemRepository_)
     const query = buildQuery(selector, config)
     return await lineItemRepo.find(query)
   }
@@ -102,7 +106,8 @@ class LineItemService extends TransactionBaseService {
    * @return the line item
    */
   async retrieve(id: string, config = {}): Promise<LineItem | never> {
-    const lineItemRepository = this.activeManager_.withRepository(
+    const manager = this.manager_
+    const lineItemRepository = manager.getCustomRepository(
       this.lineItemRepository_
     )
 
@@ -133,11 +138,11 @@ class LineItemService extends TransactionBaseService {
   ): Promise<LineItem[]> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const lineItemRepo = transactionManager.withRepository(
+        const lineItemRepo = transactionManager.getCustomRepository(
           this.lineItemRepository_
         )
 
-        const itemTaxLineRepo = transactionManager.withRepository(
+        const itemTaxLineRepo = transactionManager.getCustomRepository(
           this.itemTaxLineRepo_
         )
 
@@ -332,15 +337,6 @@ class LineItemService extends TransactionBaseService {
       unit_price = context.variantPricing?.calculated_price ?? undefined
     }
 
-    if (unit_price == null) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        `Cannot generate line item for variant "${
-          variant.title ?? variant.product.title ?? variant.id
-        }" without a price`
-      )
-    }
-
     const rawLineItem: Partial<LineItem> = {
       unit_price: unit_price,
       title: variant.product.title,
@@ -364,9 +360,8 @@ class LineItemService extends TransactionBaseService {
 
     rawLineItem.order_edit_id = context.order_edit_id || null
 
-    const lineItemRepo = this.activeManager_.withRepository(
-      this.lineItemRepository_
-    )
+    const manager = this.transactionManager_ ?? this.manager_
+    const lineItemRepo = manager.getCustomRepository(this.lineItemRepository_)
 
     const lineItem = lineItemRepo.create(rawLineItem)
     lineItem.variant = variant as ProductVariant
@@ -385,13 +380,11 @@ class LineItemService extends TransactionBaseService {
   >(data: T): Promise<TResult> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const lineItemRepository = transactionManager.withRepository(
+        const lineItemRepository = transactionManager.getCustomRepository(
           this.lineItemRepository_
         )
 
-        const data_ = (
-          Array.isArray(data) ? data : [data]
-        ) as DeepPartial<LineItem>[]
+        const data_ = Array.isArray(data) ? data : [data]
 
         const items = lineItemRepository.create(data_)
         const lineItems = await lineItemRepository.save(items)
@@ -417,7 +410,7 @@ class LineItemService extends TransactionBaseService {
 
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const lineItemRepository = transactionManager.withRepository(
+        const lineItemRepository = transactionManager.getCustomRepository(
           this.lineItemRepository_
         )
 
@@ -452,10 +445,10 @@ class LineItemService extends TransactionBaseService {
    * @param id - the id of the line item to delete
    * @return the result of the delete operation
    */
-  async delete(id: string): Promise<LineItem | undefined | null> {
+  async delete(id: string): Promise<LineItem | undefined> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const lineItemRepository = transactionManager.withRepository(
+        const lineItemRepository = transactionManager.getCustomRepository(
           this.lineItemRepository_
         )
 
@@ -471,10 +464,10 @@ class LineItemService extends TransactionBaseService {
    * @param id - the id of the line item to delete
    * @return the result of the delete operation
    */
-  async deleteWithTaxLines(id: string): Promise<LineItem | undefined | null> {
+  async deleteWithTaxLines(id: string): Promise<LineItem | undefined> {
     return await this.atomicPhase_(
       async (transactionManager: EntityManager) => {
-        const lineItemRepository = transactionManager.withRepository(
+        const lineItemRepository = transactionManager.getCustomRepository(
           this.lineItemRepository_
         )
 
@@ -493,7 +486,7 @@ class LineItemService extends TransactionBaseService {
    * @return a new line item tax line
    */
   public createTaxLine(args: DeepPartial<LineItemTaxLine>): LineItemTaxLine {
-    const itemTaxLineRepo = this.activeManager_.withRepository(
+    const itemTaxLineRepo = this.manager_.getCustomRepository(
       this.itemTaxLineRepo_
     )
 
@@ -518,7 +511,7 @@ class LineItemService extends TransactionBaseService {
         }
       )
 
-      const lineItemRepository = manager.withRepository(
+      const lineItemRepository = manager.getCustomRepository(
         this.lineItemRepository_
       )
 

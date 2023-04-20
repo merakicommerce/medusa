@@ -1,14 +1,14 @@
 import { Router } from "express"
+import middlewares, { transformStoreQuery } from "../../../middlewares"
 import { ProductCategory } from "../../../../models"
 import { PaginatedResponse } from "../../../../types/common"
-import middlewares, { transformStoreQuery } from "../../../middlewares"
 
 import listProductCategories, {
   StoreGetProductCategoriesParams,
 } from "./list-product-categories"
 
 import getProductCategory, {
-  StoreGetProductCategoriesCategoryParams,
+  StoreGetProductCategoryParams,
 } from "./get-product-category"
 
 const route = Router()
@@ -29,7 +29,7 @@ export default (app) => {
 
   route.get(
     "/:id",
-    transformStoreQuery(StoreGetProductCategoriesCategoryParams, {
+    transformStoreQuery(StoreGetProductCategoryParams, {
       defaultFields: defaultStoreProductCategoryFields,
       allowedFields: allowedStoreProductCategoryFields,
       defaultRelations: defaultStoreProductCategoryRelations,
@@ -46,7 +46,7 @@ export const defaultStoreProductCategoryRelations = [
   "category_children",
 ]
 
-export const defaultStoreCategoryScope = {
+export const defaultStoreScope = {
   is_internal: false,
   is_active: true,
 }
@@ -54,35 +54,24 @@ export const defaultStoreCategoryScope = {
 export const defaultStoreProductCategoryFields = [
   "id",
   "name",
-  "description",
   "handle",
   "parent_category_id",
   "created_at",
   "updated_at",
-  "rank",
 ]
 
 export const allowedStoreProductCategoryFields = [
   "id",
   "name",
-  "description",
   "handle",
   "parent_category_id",
   "created_at",
   "updated_at",
-  "rank",
 ]
 
 /**
  * @schema StoreGetProductCategoriesCategoryRes
  * type: object
- * x-expanded-relations:
- *   field: product_category
- *   relations:
- *     - category_children
- *     - parent_category
- * required:
- *   - product_category
  * properties:
  *   product_category:
  *     $ref: "#/components/schemas/ProductCategory"
@@ -92,18 +81,8 @@ export type StoreGetProductCategoriesCategoryRes = {
 }
 
 /**
- * @schema StoreGetProductCategoriesRes
+ * @schema StoreProductCategoriesListRes
  * type: object
- * x-expanded-relations:
- *   field: product_categories
- *   relations:
- *     - category_children
- *     - parent_category
- * required:
- *   - product_categories
- *   - count
- *   - offset
- *   - limit
  * properties:
  *   product_categories:
  *      type: array
@@ -119,7 +98,7 @@ export type StoreGetProductCategoriesCategoryRes = {
  *      type: integer
  *      description: The number of items per page
  */
-export type StoreGetProductCategoriesRes = PaginatedResponse & {
+export type StoreProductCategoriesListRes = PaginatedResponse & {
   product_categories: ProductCategory[]
 }
 

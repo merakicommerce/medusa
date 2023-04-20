@@ -2,7 +2,7 @@ import DiscountService from "../../../../services/discount"
 import { EntityManager } from "typeorm"
 
 /**
- * @oas [delete] /admin/discounts/{id}
+ * @oas [delete] /discounts/{id}
  * operationId: "DeleteDiscountsDiscount"
  * summary: "Delete a Discount"
  * description: "Deletes a Discount."
@@ -31,7 +31,7 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount
  * responses:
  *   200:
  *     description: OK

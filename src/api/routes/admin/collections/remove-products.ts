@@ -5,7 +5,7 @@ import { EntityManager } from "typeorm"
 import ProductCollectionService from "../../../../services/product-collection"
 
 /**
- * @oas [delete] /admin/collections/{id}/products/batch
+ * @oas [delete] /collections/{id}/products/batch
  * operationId: "DeleteProductsFromCollection"
  * summary: "Remove Product"
  * description: "Removes products associated with a Product Collection"
@@ -35,7 +35,7 @@ import ProductCollectionService from "../../../../services/product-collection"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Collections
+ *   - Collection
  * responses:
  *  "200":
  *    description: OK

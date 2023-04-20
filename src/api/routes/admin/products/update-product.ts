@@ -1,6 +1,3 @@
-import { IInventoryService } from "@medusajs/types"
-import { MedusaError } from "@medusajs/utils"
-import { Type } from "class-transformer"
 import {
   IsArray,
   IsBoolean,
@@ -14,39 +11,46 @@ import {
   ValidateIf,
   ValidateNested,
 } from "class-validator"
-import { EntityManager } from "typeorm"
-import { defaultAdminProductFields, defaultAdminProductRelations } from "."
-import SalesChannelFeatureFlag from "../../../../loaders/feature-flags/sales-channels"
-import { ProductStatus, ProductVariant } from "../../../../models"
-import { ProductVariantRepository } from "../../../../repositories/product-variant"
 import {
   PricingService,
   ProductService,
   ProductVariantInventoryService,
   ProductVariantService,
 } from "../../../../services"
-import { Logger } from "../../../../types/global"
 import {
   ProductProductCategoryReq,
   ProductSalesChannelReq,
   ProductTagReq,
   ProductTypeReq,
 } from "../../../../types/product"
+
+import { Type } from "class-transformer"
+import { EntityManager } from "typeorm"
+import SalesChannelFeatureFlag from "../../../../loaders/feature-flags/sales-channels"
+import { ProductStatus, ProductVariant } from "../../../../models"
 import {
   CreateProductVariantInput,
   ProductVariantPricesUpdateReq,
   UpdateProductVariantInput,
 } from "../../../../types/product-variant"
 import { FeatureFlagDecorators } from "../../../../utils/feature-flag-decorators"
-import { DistributedTransaction } from "../../../../utils/transaction"
 import { validator } from "../../../../utils/validator"
+import { MedusaError } from "medusa-core-utils"
+import { DistributedTransaction } from "../../../../utils/transaction"
+import { IInventoryService } from "../../../../interfaces"
+import { Logger } from "../../../../types/global"
 import {
-  createVariantsTransaction,
+  defaultAdminProductFields,
+  defaultAdminProductRelations,
+} from "./index"
+import { ProductVariantRepository } from "../../../../repositories/product-variant"
+import {
+  createVariantTransaction,
   revertVariantTransaction,
 } from "./transaction/create-product-variant"
 
 /**
- * @oas [post] /admin/products/{id}
+ * @oas [post] /products/{id}
  * operationId: "PostProductsProduct"
  * summary: "Update a Product"
  * description: "Updates a Product"
@@ -87,7 +91,7 @@ import {
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Products
+ *   - Product
  * responses:
  *   200:
  *     description: OK
@@ -140,7 +144,7 @@ export default async (req, res) => {
       return
     }
 
-    const variantRepo = manager.withRepository(productVariantRepo)
+    const variantRepo = manager.getCustomRepository(productVariantRepo)
     const productVariants = await productVariantService
       .withTransaction(transactionManager)
       .list(
@@ -224,25 +228,29 @@ export default async (req, res) => {
     }
 
     if (variantsToCreate.length) {
-      try {
-        const varTransaction = await createVariantsTransaction(
-          transactionDependencies,
-          product.id,
-          variantsToCreate as CreateProductVariantInput[]
-        )
-        allVariantTransactions.push(varTransaction)
-      } catch (e) {
-        await Promise.all(
-          allVariantTransactions.map(async (transaction) => {
-            await revertVariantTransaction(
+      await Promise.all(
+        variantsToCreate.map(async (data) => {
+          try {
+            const varTransaction = await createVariantTransaction(
               transactionDependencies,
-              transaction
-            ).catch(() => logger.warn("Transaction couldn't be reverted."))
-          })
-        )
+              product.id,
+              data as CreateProductVariantInput
+            )
+            allVariantTransactions.push(varTransaction)
+          } catch (e) {
+            await Promise.all(
+              allVariantTransactions.map(async (transaction) => {
+                await revertVariantTransaction(
+                  transactionDependencies,
+                  transaction
+                ).catch(() => logger.warn("Transaction couldn't be reverted."))
+              })
+            )
 
-        throw e
-      }
+            throw e
+          }
+        })
+      )
     }
   })
 

@@ -3,7 +3,7 @@ import DiscountConditionService from "../../../../services/discount-condition"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/discounts/{discount_id}/conditions/{condition_id}
+ * @oas [get] /discounts/{discount_id}/conditions/{condition_id}
  * operationId: "GetDiscountsDiscountConditionsCondition"
  * summary: "Get a Condition"
  * description: "Gets a DiscountCondition"
@@ -36,7 +36,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount Condition
  * responses:
  *   200:
  *     description: OK

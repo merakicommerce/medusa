@@ -1,16 +1,14 @@
-import { IInventoryService } from "@medusajs/types"
 import { EntityManager } from "typeorm"
+import { IInventoryService } from "../../../../interfaces"
 
 /**
- * @oas [delete] /admin/reservations/{id}
+ * @oas [delete] /reservations/{id}
  * operationId: "DeleteReservationsReservation"
  * summary: "Delete a Reservation"
  * description: "Deletes a Reservation."
  * x-authenticated: true
  * parameters:
  *   - (path) id=* {string} The ID of the Reservation to delete.
- * x-codegen:
- *   method: delete
  * x-codeSamples:
  *   - lang: JavaScript
  *     label: JS Client
@@ -18,7 +16,7 @@ import { EntityManager } from "typeorm"
  *       import Medusa from "@medusajs/medusa-js"
  *       const medusa = new Medusa({ baseUrl: MEDUSA_BACKEND_URL, maxRetries: 3 })
  *       // must be previously logged in or use api token
- *       medusa.admin.reservations.delete(reservationId)
+ *       medusa.admin.reservations.delete(reservation.id)
  *       .then(({ id, object, deleted }) => {
  *         console.log(id);
  *       });
@@ -31,14 +29,26 @@ import { EntityManager } from "typeorm"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Reservations
+ *   - Reservation
  * responses:
  *   200:
  *     description: OK
  *     content:
  *       application/json:
  *         schema:
- *           $ref: "#/components/schemas/AdminReservationsDeleteRes"
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: The ID of the deleted Reservation.
+ *             object:
+ *               type: string
+ *               description: The type of the object that was deleted.
+ *               default: reservation
+ *             deleted:
+ *               type: boolean
+ *               description: Whether or not the Reservation was deleted.
+ *               default: true
  *   "400":
  *     $ref: "#/components/responses/400_error"
  *   "401":
@@ -54,11 +64,12 @@ import { EntityManager } from "typeorm"
  */
 export default async (req, res) => {
   const { id } = req.params
-  const inventoryService: IInventoryService =
-    req.scope.resolve("inventoryService")
-  const manager: EntityManager = req.scope.resolve("manager")
+  const inventoryService: IInventoryService = req.resolve("inventoryService")
+  const manager: EntityManager = req.resolve("manager")
 
-  await inventoryService.deleteReservationItem(id)
+  await manager.transaction(async (manager) => {
+    await inventoryService.withTransaction(manager).deleteReservationItem(id)
+  })
 
   res.json({
     id,

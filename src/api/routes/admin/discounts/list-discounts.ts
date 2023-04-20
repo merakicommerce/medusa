@@ -13,7 +13,7 @@ import { DiscountService } from "../../../../services"
 import { optionalBooleanMapper } from "../../../../utils/validators/is-boolean"
 
 /**
- * @oas [get] /admin/discounts
+ * @oas [get] /discounts
  * operationId: "GetDiscounts"
  * summary: "List Discounts"
  * x-authenticated: true
@@ -62,7 +62,7 @@ import { optionalBooleanMapper } from "../../../../utils/validators/is-boolean"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Discounts
+ *   - Discount
  * responses:
  *   200:
  *     description: OK

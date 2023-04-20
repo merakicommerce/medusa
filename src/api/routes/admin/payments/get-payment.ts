@@ -2,7 +2,7 @@ import { PaymentService } from "../../../../services"
 import { FindParams } from "../../../../types/common"
 
 /**
- * @oas [get] /admin/payments/{id}
+ * @oas [get] /payments/{id}
  * operationId: "GetPaymentsPayment"
  * summary: "Get Payment details"
  * description: "Retrieves the Payment details"
@@ -32,7 +32,7 @@ import { FindParams } from "../../../../types/common"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Payments
+ *   - Payment
  * responses:
  *   200:
  *     description: OK

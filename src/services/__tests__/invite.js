@@ -14,7 +14,7 @@ describe("InviteService", () => {
     })
 
     const inviteService = new InviteService({
-      manager: { withRepository: jest.fn(() => inviteRepo) },
+      manager: { getCustomRepository: jest.fn(() => inviteRepo) },
       userService: {},
       userRepository: {},
       inviteRepository: inviteRepo,
@@ -192,7 +192,7 @@ describe("InviteService", () => {
     const inviteRepo = MockRepository({
       findOne: (q) => {
         return Promise.resolve({
-          id: q.where.id,
+          id: q.id,
           role: "admin",
           user_email: "test@test.com",
         })
@@ -200,7 +200,7 @@ describe("InviteService", () => {
     })
 
     const inviteService = new InviteService({
-      manager: { withRepository: jest.fn(() => inviteRepo) },
+      manager: { getCustomRepository: jest.fn(() => inviteRepo) },
       userService: {},
       userRepository: {},
       inviteRepository: inviteRepo,

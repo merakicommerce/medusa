@@ -1,19 +1,18 @@
-import { EventBusTypes } from "@medusajs/types"
-import { MedusaError } from "medusa-core-utils"
-import { EntityManager, In } from "typeorm"
 import { TransactionBaseService } from "../interfaces"
-import { OrderItemChange } from "../models"
 import { OrderItemChangeRepository } from "../repositories/order-item-change"
+import { DeepPartial, EntityManager, In } from "typeorm"
+import { EventBusService, LineItemService } from "./index"
 import { FindConfig, Selector } from "../types/common"
-import { CreateOrderEditItemChangeInput } from "../types/order-edit"
+import { OrderItemChange } from "../models"
 import { buildQuery } from "../utils"
-import { LineItemService } from "./index"
+import { MedusaError } from "medusa-core-utils"
 import TaxProviderService from "./tax-provider"
+import { CreateOrderEditItemChangeInput } from "../types/order-edit"
 
 type InjectedDependencies = {
   manager: EntityManager
   orderItemChangeRepository: typeof OrderItemChangeRepository
-  eventBusService: EventBusTypes.IEventBusService
+  eventBusService: EventBusService
   lineItemService: LineItemService
   taxProviderService: TaxProviderService
 }
@@ -24,13 +23,16 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
     DELETED: "order-edit-item-change.DELETED",
   }
 
-  // eslint-disable-next-line max-len
+  protected manager_: EntityManager
+  protected transactionManager_: EntityManager | undefined
+
   protected readonly orderItemChangeRepository_: typeof OrderItemChangeRepository
-  protected readonly eventBus_: EventBusTypes.IEventBusService
+  protected readonly eventBus_: EventBusService
   protected readonly lineItemService_: LineItemService
   protected readonly taxProviderService_: TaxProviderService
 
   constructor({
+    manager,
     orderItemChangeRepository,
     eventBusService,
     lineItemService,
@@ -39,6 +41,7 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
     // eslint-disable-next-line prefer-rest-params
     super(arguments[0])
 
+    this.manager_ = manager
     this.orderItemChangeRepository_ = orderItemChangeRepository
     this.eventBus_ = eventBusService
     this.lineItemService_ = lineItemService
@@ -49,7 +52,8 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
     id: string,
     config: FindConfig<OrderItemChange> = {}
   ): Promise<OrderItemChange | never> {
-    const orderItemChangeRepo = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ ?? this.manager_
+    const orderItemChangeRepo = manager.getCustomRepository(
       this.orderItemChangeRepository_
     )
 
@@ -70,7 +74,8 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
     selector: Selector<OrderItemChange>,
     config: FindConfig<OrderItemChange> = {}
   ): Promise<OrderItemChange[]> {
-    const orderItemChangeRepo = this.activeManager_.withRepository(
+    const manager = this.transactionManager_ ?? this.manager_
+    const orderItemChangeRepo = manager.getCustomRepository(
       this.orderItemChangeRepository_
     )
 
@@ -80,7 +85,7 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
 
   async create(data: CreateOrderEditItemChangeInput): Promise<OrderItemChange> {
     return await this.atomicPhase_(async (manager) => {
-      const orderItemChangeRepo = manager.withRepository(
+      const orderItemChangeRepo = manager.getCustomRepository(
         this.orderItemChangeRepository_
       )
       const changeEntity = orderItemChangeRepo.create(data)
@@ -100,7 +105,7 @@ export default class OrderEditItemChangeService extends TransactionBaseService {
       : [itemChangeIds]
 
     return await this.atomicPhase_(async (manager) => {
-      const orderItemChangeRepo = manager.withRepository(
+      const orderItemChangeRepo = manager.getCustomRepository(
         this.orderItemChangeRepository_
       )
 

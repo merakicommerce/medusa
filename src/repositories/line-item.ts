@@ -1,8 +1,9 @@
+import { EntityRepository, Repository } from "typeorm"
 import { LineItem } from "../models/line-item"
 import { ReturnItem } from "../models/return-item"
-import { dataSource } from "../loaders/database"
 
-export const LineItemRepository = dataSource.getRepository(LineItem).extend({
+@EntityRepository(LineItem)
+export class LineItemRepository extends Repository<LineItem> {
   /**
    * Finds line items that are to be returned as part of the Return represented
    * by `returnId`. The function joins the associated ReturnItem and the
@@ -26,7 +27,5 @@ export const LineItemRepository = dataSource.getRepository(LineItem).extend({
       .where(`ri.return_id = :returnId`, { returnId })
 
     return (await qb.getMany()) as (LineItem & { return_item: ReturnItem })[]
-  },
-})
-
-export default LineItemRepository
+  }
+}

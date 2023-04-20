@@ -6,7 +6,7 @@ import {
 import { ShippingProfileService } from "../../../../services"
 
 /**
- * @oas [get] /admin/shipping-profiles/{id}
+ * @oas [get] /shipping-profiles/{id}
  * operationId: "GetShippingProfilesProfile"
  * summary: "Get a Shipping Profile"
  * description: "Retrieves a Shipping Profile."
@@ -35,7 +35,7 @@ import { ShippingProfileService } from "../../../../services"
  *   - api_token: []
  *   - cookie_auth: []
  * tags:
- *   - Shipping Profiles
+ *   - Shipping Profile
  * responses:
  *   200:
  *     description: OK
